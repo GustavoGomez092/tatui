@@ -4,6 +4,7 @@ import {
   getTasksByStatus,
   createTask,
   updateTask,
+  changeTaskProject,
   moveTask,
   deleteTask,
   type TaskWithProject,
@@ -21,6 +22,7 @@ export interface UseTasksResult {
     id: number,
     data: Partial<Pick<TaskWithProject, "title" | "description" | "status" | "durationMinutes" | "position">>
   ) => void;
+  changeProject: (id: number, projectName: string) => void;
   move: (id: number, status: TaskStatus) => void;
   remove: (id: number) => void;
   refresh: () => void;
@@ -67,6 +69,13 @@ export function useTasks(weekId: string = getWeekId()): UseTasksResult {
     []
   );
 
+  const changeProject = useCallback((id: number, projectName: string) => {
+    const updated = changeTaskProject(id, projectName);
+    if (updated) {
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    }
+  }, []);
+
   const move = useCallback((id: number, status: TaskStatus) => {
     const updated = moveTask(id, status);
     if (updated) {
@@ -79,5 +88,5 @@ export function useTasks(weekId: string = getWeekId()): UseTasksResult {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  return { tasks, tasksByStatus, weekId, addTask, editTask, move, remove, refresh };
+  return { tasks, tasksByStatus, weekId, addTask, editTask, changeProject, move, remove, refresh };
 }

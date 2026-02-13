@@ -193,6 +193,20 @@ export function updateTask(
   return { ...result, projectName: proj.name, projectColor: proj.color };
 }
 
+export function changeTaskProject(id: number, projectName: string): TaskWithProject | undefined {
+  const db = getDb();
+  const project = ensureProject(projectName);
+  const result = db
+    .update(tasks)
+    .set({ projectId: project.id, updatedAt: new Date().toISOString() })
+    .where(eq(tasks.id, id))
+    .returning()
+    .get();
+
+  if (!result) return undefined;
+  return { ...result, projectName: project.name, projectColor: project.color };
+}
+
 export function moveTask(id: number, newStatus: TaskStatus): TaskWithProject | undefined {
   return updateTask(id, { status: newStatus });
 }

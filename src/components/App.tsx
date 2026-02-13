@@ -17,7 +17,7 @@ type AppMode = "navigate" | "input" | "summary" | "detail" | "confirm-delete";
 
 export function App() {
   const weekId = getWeekId();
-  const { tasks, tasksByStatus, addTask, move, remove, refresh } =
+  const { tasks, tasksByStatus, addTask, editTask, changeProject, move, remove, refresh } =
     useTasks(weekId);
   const { projects, refresh: refreshProjects } = useProjects();
   const { activeFilter, cycleFilter, filterTasks } = useProjectFilter();
@@ -192,18 +192,37 @@ export function App() {
     { isActive: mode === "summary" }
   );
 
-  useInput(
-    (input, key) => {
-      if (key.escape || key.return || input === "o" || input === "q") {
-        if (input === "q") {
-          exit();
-          return;
-        }
-        setDetailTask(null);
-        setMode("navigate");
-      }
+  const handleDetailClose = useCallback(() => {
+    setDetailTask(null);
+    setMode("navigate");
+    refresh();
+    refreshProjects();
+  }, [refresh, refreshProjects]);
+
+  const handleDetailUpdateField = useCallback(
+    (
+      id: number,
+      data: Partial<Pick<TaskWithProject, "title" | "description" | "durationMinutes">>
+    ) => {
+      editTask(id, data);
+      // Update the detailTask in place so the view reflects changes
+      setDetailTask((prev) =>
+        prev && prev.id === id ? { ...prev, ...data } : prev
+      );
     },
-    { isActive: mode === "detail" }
+    [editTask]
+  );
+
+  const handleDetailChangeProject = useCallback(
+    (id: number, projectName: string) => {
+      changeProject(id, projectName);
+      refresh();
+      refreshProjects();
+      // Return to board since project info changed on the task object
+      setDetailTask(null);
+      setMode("navigate");
+    },
+    [changeProject, refresh, refreshProjects]
   );
 
   useInput(
@@ -228,7 +247,14 @@ export function App() {
       <Header weekId={weekId} tasks={tasks} activeFilter={activeFilter ?? undefined} />
 
       {mode === "detail" && detailTask ? (
-        <TaskDetail task={detailTask} />
+        <TaskDetail
+          task={detailTask}
+          projectNames={projectNames}
+          onUpdateField={handleDetailUpdateField}
+          onChangeProject={handleDetailChangeProject}
+          onClose={handleDetailClose}
+          isActive={mode === "detail"}
+        />
       ) : mode === "summary" ? (
         <SummaryView tasks={tasks} weekId={weekId} />
       ) : (
