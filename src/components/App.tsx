@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Box, useInput, useApp } from "ink";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Box, Text, useInput, useApp } from "ink";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
@@ -27,6 +27,8 @@ export function App() {
   const [selectedRow, setSelectedRow] = useState(0);
   const [mode, setMode] = useState<AppMode>("navigate");
   const [detailTask, setDetailTask] = useState<TaskWithProject | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -48,12 +50,22 @@ export function App() {
     [filteredTasks, selectedRow]
   );
 
+  const showError = useCallback((msg: string) => {
+    if (errorTimer.current) clearTimeout(errorTimer.current);
+    setErrorMsg(msg);
+    errorTimer.current = setTimeout(() => setErrorMsg(null), 3000);
+  }, []);
+
   const handleNewTask = useCallback(
     (input: string) => {
-      addTask(input);
+      try {
+        addTask(input);
+      } catch (err) {
+        showError(err instanceof Error ? err.message : "Failed to create task");
+      }
       setMode("navigate");
     },
-    [addTask]
+    [addTask, showError]
   );
 
   useInput(
@@ -215,6 +227,13 @@ export function App() {
           onCancel={() => setMode("navigate")}
           isActive={mode === "input"}
         />
+      ) : null}
+
+      {errorMsg ? (
+        <Box paddingX={1}>
+          <Text color="red" bold>Error: </Text>
+          <Text color="red">{errorMsg}</Text>
+        </Box>
       ) : null}
 
       <HelpBar mode={mode} />
