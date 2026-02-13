@@ -13,14 +13,25 @@ const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satu
 
 const STATUS_LABELS: Record<TaskStatus, { label: string; color: string }> = {
   todo: { label: "TODO", color: "blue" },
-  "in-progress": { label: "IN PROGRESS", color: "yellow" },
+  "in-progress": { label: "IN PROG", color: "yellow" },
   done: { label: "DONE", color: "green" },
-  archived: { label: "ARCHIVED", color: "gray" },
+  archived: { label: "ARCHVD", color: "gray" },
 };
+
+// Column widths
+const COL_PROJECT = 12;
+const COL_TITLE = 22;
+const COL_DESC = 30;
+const COL_TIME = 7;
+const COL_STATUS = 8;
+
+function truncate(str: string, max: number): string {
+  if (str.length <= max) return str.padEnd(max);
+  return str.slice(0, max - 2) + "..";
+}
 
 function getDayOfWeek(dateStr: string): number {
   const d = new Date(dateStr);
-  // JS getDay: 0=Sun, 1=Mon... convert to 0=Mon, 6=Sun
   const day = d.getDay();
   return day === 0 ? 6 : day - 1;
 }
@@ -35,6 +46,8 @@ function groupByDay(tasks: TaskWithProject[]): Map<number, TaskWithProject[]> {
   }
   return groups;
 }
+
+const SEPARATOR_WIDTH = COL_PROJECT + COL_TITLE + COL_DESC + COL_TIME + COL_STATUS + 4;
 
 export function SummaryView({ tasks, weekId }: SummaryViewProps) {
   const byDay = groupByDay(tasks);
@@ -65,14 +78,18 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
 
       {/* Table header */}
       <Box>
-        <Box width={12}><Text bold dimColor>Project</Text></Box>
-        <Box width={20}><Text bold dimColor>Title</Text></Box>
-        <Box flexGrow={1}><Text bold dimColor>Description</Text></Box>
-        <Box width={8}><Text bold dimColor>Time</Text></Box>
-        <Box width={14}><Text bold dimColor>Status</Text></Box>
+        <Box width={COL_PROJECT}><Text bold dimColor>Project</Text></Box>
+        <Text> </Text>
+        <Box width={COL_TITLE}><Text bold dimColor>Title</Text></Box>
+        <Text> </Text>
+        <Box width={COL_DESC}><Text bold dimColor>Description</Text></Box>
+        <Text> </Text>
+        <Box width={COL_TIME}><Text bold dimColor>Time</Text></Box>
+        <Text> </Text>
+        <Box width={COL_STATUS}><Text bold dimColor>Status</Text></Box>
       </Box>
       <Box>
-        <Text dimColor>{"─".repeat(80)}</Text>
+        <Text dimColor>{"─".repeat(SEPARATOR_WIDTH)}</Text>
       </Box>
 
       {/* Days */}
@@ -92,31 +109,35 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
               ) : null}
             </Box>
 
-            {/* Task rows */}
+            {/* Task rows — all values pre-truncated to fixed widths */}
             {dayTasks.map((task) => {
               const statusInfo = STATUS_LABELS[task.status];
+              const project = truncate(task.projectName, COL_PROJECT);
+              const title = truncate(task.title, COL_TITLE);
+              const desc = truncate(task.description || "—", COL_DESC);
+              const time = (task.durationMinutes ? formatDuration(task.durationMinutes) : "—").padEnd(COL_TIME);
+              const status = truncate(statusInfo.label, COL_STATUS);
+
               return (
                 <Box key={task.id}>
-                  <Box width={12}>
-                    <Text color={task.projectColor}>
-                      {task.projectName.slice(0, 10)}
-                    </Text>
+                  <Box width={COL_PROJECT}>
+                    <Text color={task.projectColor}>{project}</Text>
                   </Box>
-                  <Box width={20}>
-                    <Text wrap="truncate">{task.title}</Text>
+                  <Text> </Text>
+                  <Box width={COL_TITLE}>
+                    <Text>{title}</Text>
                   </Box>
-                  <Box flexGrow={1}>
-                    <Text wrap="truncate" dimColor>
-                      {task.description || "—"}
-                    </Text>
+                  <Text> </Text>
+                  <Box width={COL_DESC}>
+                    <Text dimColor>{desc}</Text>
                   </Box>
-                  <Box width={8}>
-                    <Text dimColor>
-                      {task.durationMinutes ? formatDuration(task.durationMinutes) : "—"}
-                    </Text>
+                  <Text> </Text>
+                  <Box width={COL_TIME}>
+                    <Text dimColor>{time}</Text>
                   </Box>
-                  <Box width={14}>
-                    <Text color={statusInfo.color}>{statusInfo.label}</Text>
+                  <Text> </Text>
+                  <Box width={COL_STATUS}>
+                    <Text color={statusInfo.color}>{status}</Text>
                   </Box>
                 </Box>
               );
