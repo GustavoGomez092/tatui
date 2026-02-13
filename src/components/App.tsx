@@ -54,8 +54,8 @@ export function App() {
   const { stdout } = useStdout();
 
   const summaryDayCount = useMemo(() => getActiveDayCount(tasks), [tasks]);
-  // Viewport height for summary (subtract header ~3, helpbar ~1, messages ~2)
-  const summaryViewportHeight = Math.max(5, (stdout?.rows ?? 24) - 6);
+  // Viewport height for summary (subtract Header=1, HelpBar=1, 1 margin)
+  const summaryViewportHeight = Math.max(5, (stdout?.rows ?? 24) - 3);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -227,17 +227,18 @@ export function App() {
       return day === 0 ? 6 : day - 1;
     };
 
-    const header = "Day\tProject\tTitle\tDescription\tTime\tStatus";
+    const sep = " :: ";
+    const header = ["Day", "Project", "Title", "Description", "Time", "Status"].join(sep);
     const rows = tasks.map((task) => {
       const day = dayNames[getDayOfWeek(task.createdAt)] ?? "";
       const time = task.durationMinutes ? formatDuration(task.durationMinutes) : "";
       const status = statusLabels[task.status] ?? task.status;
       const desc = task.description ?? "";
-      return `${day}\t${task.projectName}\t${task.title}\t${desc}\t${time}\t${status}`;
+      return [day, task.projectName, task.title, desc, time, status].join(sep);
     });
-    const tsv = [header, ...rows].join("\n");
+    const output = [header, ...rows].join("\n");
 
-    clipboard.write(tsv).then(() => {
+    clipboard.write(output).then(() => {
       showSuccess("Copied to clipboard!");
     }).catch(() => {
       showError("Failed to copy to clipboard");

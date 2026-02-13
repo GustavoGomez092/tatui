@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Text } from "ink";
+import { Box, Text, useStdout } from "ink";
 import { Alert } from "@inkjs/ui";
 import { Table } from "./Table.js";
 import { type TaskWithProject } from "../db/tasks.js";
@@ -50,13 +50,12 @@ type TableRow = {
 
 const TABLE_COLUMNS: (keyof TableRow)[] = ["Project", "Title", "Description", "Time", "Status"];
 
-const MAX_COLUMN_WIDTHS: Partial<Record<keyof TableRow, number>> = {
-  Project: 12,
-  Title: 20,
-  Description: 40,
-  Time: 6,
-  Status: 8,
-};
+// Fixed column content widths (Description is dynamic)
+const FIXED_COL_WIDTHS = { Project: 14, Title: 20, Time: 6, Status: 8 };
+const FIXED_TOTAL = Object.values(FIXED_COL_WIDTHS).reduce((s, w) => s + w, 0); // 48
+const COL_COUNT = 5;
+const TABLE_CHROME = COL_COUNT + 1 + COL_COUNT * 2; // borders(6) + padding(10)
+const OUTER_PADDING = 2; // paddingX={1} on wrapper
 
 function buildTableData(dayTasks: TaskWithProject[]): TableRow[] {
   return dayTasks.map((task) => {
@@ -87,6 +86,14 @@ export function getActiveDayCount(tasks: TaskWithProject[]): number {
 }
 
 export function SummaryView({ tasks, weekId, firstVisibleDay = 0, viewportHeight }: SummaryViewProps) {
+  const { stdout } = useStdout();
+  const terminalWidth = stdout?.columns ?? 120;
+  const descWidth = Math.max(20, terminalWidth - FIXED_TOTAL - TABLE_CHROME - OUTER_PADDING);
+  const maxColumnWidths: Partial<Record<keyof TableRow, number>> = {
+    ...FIXED_COL_WIDTHS,
+    Description: descWidth,
+  };
+
   const byDay = groupByDay(tasks);
   const totalMinutes = tasks.reduce((s, t) => s + (t.durationMinutes ?? 0), 0);
   const doneMinutes = tasks
@@ -152,7 +159,7 @@ export function SummaryView({ tasks, weekId, firstVisibleDay = 0, viewportHeight
               data={tableData}
               columns={TABLE_COLUMNS}
               padding={1}
-              maxColumnWidths={MAX_COLUMN_WIDTHS}
+              maxColumnWidths={maxColumnWidths}
               cell={({ children, columnKey }) => {
                 if (columnKey === "Status") {
                   const trimmed = String(children).trim();
