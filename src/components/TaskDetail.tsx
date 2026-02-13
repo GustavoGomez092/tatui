@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
-import { AutocompleteInput } from "./AutocompleteInput.js";
+import { TextInput } from "@inkjs/ui";
 import { type TaskWithProject } from "../db/tasks.js";
 import { formatDuration } from "../utils/week.js";
 import { parseDuration } from "../utils/parser.js";
@@ -37,7 +37,7 @@ export function TaskDetail({
 }: TaskDetailProps) {
   const [focusedField, setFocusedField] = useState(0);
   const [editing, setEditing] = useState(false);
-  const [editValue, setEditValue] = useState("");
+  const [editKey, setEditKey] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const status = STATUS_DISPLAY[task.status] ?? {
@@ -66,10 +66,10 @@ export function TaskDetail({
   );
 
   const startEditing = useCallback(() => {
-    setEditValue(getFieldValue(currentField));
     setEditing(true);
+    setEditKey((k) => k + 1);
     setErrorMsg(null);
-  }, [currentField, getFieldValue]);
+  }, []);
 
   const saveEdit = useCallback(
     (val: string) => {
@@ -110,7 +110,6 @@ export function TaskDetail({
           break;
       }
 
-      setEditValue("");
       setErrorMsg(null);
       // Defer setEditing(false) so the navigation-mode useInput handler
       // doesn't catch the same Enter keypress on the same tick
@@ -121,7 +120,6 @@ export function TaskDetail({
 
   const cancelEdit = useCallback(() => {
     setEditing(false);
-    setEditValue("");
     setErrorMsg(null);
   }, []);
 
@@ -159,8 +157,6 @@ export function TaskDetail({
   );
 
   // Edit mode: Escape cancels the current field edit
-  // Note: AutocompleteInput also catches Escape to clear text, both fire together.
-  // This is fine — clearing + canceling is the desired behavior.
   useInput(
     (_input, key) => {
       if (!isActive || !editing) return;
@@ -198,9 +194,9 @@ export function TaskDetail({
             {isFocused ? ">" : " "} {label}:{" "}
           </Text>
           {isEditing ? (
-            <AutocompleteInput
-              value={editValue}
-              onChange={setEditValue}
+            <TextInput
+              key={`${field}-${editKey}`}
+              defaultValue={displayValue}
               onSubmit={saveEdit}
               suggestions={suggestions}
               placeholder={
@@ -208,7 +204,6 @@ export function TaskDetail({
                   ? "e.g. 15m, 1h, 1.5h, 2h, 1d"
                   : `Enter ${label.toLowerCase()}`
               }
-              isActive={true}
             />
           ) : (
             <Text

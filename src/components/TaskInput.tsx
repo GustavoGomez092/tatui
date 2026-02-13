@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
-import { AutocompleteInput } from "./AutocompleteInput.js";
+import { TextInput } from "@inkjs/ui";
 import { isShorthand } from "../utils/parser.js";
 
 type InputStep = "title" | "project";
@@ -18,10 +18,10 @@ export function TaskInput({
   onCancel,
   isActive,
 }: TaskInputProps) {
-  const [value, setValue] = useState("");
+  const [currentValue, setCurrentValue] = useState("");
   const [step, setStep] = useState<InputStep>("title");
   const [pendingTitle, setPendingTitle] = useState("");
-  const [selectedProjectIdx, setSelectedProjectIdx] = useState(0);
+  const [inputKey, setInputKey] = useState(0);
 
   const shorthandSuggestions = useMemo(
     () => projectNames.map((p) => p + "::"),
@@ -37,18 +37,18 @@ export function TaskInput({
       }
 
       if (isShorthand(trimmed)) {
-        // Shorthand — submit directly
         onSubmit(trimmed);
-        setValue("");
+        setCurrentValue("");
         setStep("title");
+        setInputKey((k) => k + 1);
         return;
       }
 
       // Plain title — move to project selection step
       setPendingTitle(trimmed);
-      setValue("");
-      setSelectedProjectIdx(0);
+      setCurrentValue("");
       setStep("project");
+      setInputKey((k) => k + 1);
     },
     [onSubmit, onCancel]
   );
@@ -57,11 +57,11 @@ export function TaskInput({
     (val: string) => {
       const projectName = val.trim();
       if (!projectName) return;
-      // Build shorthand from selected project + pending title
       onSubmit(`${projectName}::${pendingTitle}`);
-      setValue("");
+      setCurrentValue("");
       setPendingTitle("");
       setStep("title");
+      setInputKey((k) => k + 1);
     },
     [onSubmit, pendingTitle]
   );
@@ -71,38 +71,18 @@ export function TaskInput({
       if (!isActive) return;
       if (key.escape) {
         if (step === "project") {
-          // Go back to title step
-          setValue(pendingTitle);
+          // Go back to title step with pending title restored
+          setCurrentValue(pendingTitle);
           setPendingTitle("");
           setStep("title");
+          setInputKey((k) => k + 1);
         } else {
           onCancel();
-          setValue("");
+          setCurrentValue("");
         }
       }
     },
     { isActive }
-  );
-
-  // For project step: allow j/k or arrows to select from list
-  useInput(
-    (input, key) => {
-      if (!isActive || step !== "project" || value) return;
-      if (key.downArrow || input === "j") {
-        setSelectedProjectIdx((i) => Math.min(i + 1, projectNames.length - 1));
-      }
-      if (key.upArrow || input === "k") {
-        setSelectedProjectIdx((i) => Math.max(i - 1, 0));
-      }
-      if (key.return && projectNames.length > 0 && !value) {
-        // Select from list
-        onSubmit(`${projectNames[selectedProjectIdx]}::${pendingTitle}`);
-        setValue("");
-        setPendingTitle("");
-        setStep("title");
-      }
-    },
-    { isActive: isActive && step === "project" }
   );
 
   if (!isActive) return null;
@@ -115,36 +95,20 @@ export function TaskInput({
         </Text>
         <Box marginTop={1}>
           <Text>{">"} </Text>
-          <AutocompleteInput
-            value={value}
-            onChange={setValue}
+          <TextInput
+            key={`project-${inputKey}`}
+            onChange={setCurrentValue}
             onSubmit={handleProjectSubmit}
             suggestions={projectNames}
-            placeholder="Type project name or select below"
-            isActive={isActive}
+            placeholder="Type project name"
+            isDisabled={!isActive}
           />
         </Box>
-        {projectNames.length > 0 && !value ? (
-          <Box flexDirection="column" marginTop={1}>
-            {projectNames.map((name, i) => (
-              <Text key={name}>
-                {i === selectedProjectIdx ? (
-                  <Text color="cyan">{"> "}{name}</Text>
-                ) : (
-                  <Text dimColor>{"  "}{name}</Text>
-                )}
-              </Text>
-            ))}
-          </Box>
-        ) : null}
-        <Text dimColor>
-          Type to filter or create new | j/k to browse
-        </Text>
       </Box>
     );
   }
 
-  const usingShorthand = isShorthand(value);
+  const usingShorthand = isShorthand(currentValue);
 
   return (
     <Box flexDirection="column" paddingX={1} borderStyle="single" borderColor="green">
@@ -153,13 +117,14 @@ export function TaskInput({
       </Text>
       <Box>
         <Text>{">"} </Text>
-        <AutocompleteInput
-          value={value}
-          onChange={setValue}
+        <TextInput
+          key={`title-${inputKey}`}
+          defaultValue={currentValue}
+          onChange={setCurrentValue}
           onSubmit={handleTitleSubmit}
           suggestions={shorthandSuggestions}
           placeholder="project::title::desc::duration or task title"
-          isActive={isActive}
+          isDisabled={!isActive}
         />
       </Box>
       {usingShorthand ? (
