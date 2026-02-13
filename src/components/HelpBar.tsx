@@ -7,7 +7,7 @@ interface HelpBarProps {
 
 const HELP: Record<string, string> = {
   navigate: "h/l:columns  j/k:rows  Enter:advance  o:open  b:back  n:new  p:filter  s:summary  d:delete  r:refresh  q:quit",
-  input: "Enter:create  Tab:autocomplete  Esc:cancel",
+  input: "Enter:next step  Tab:autocomplete  Esc:back/cancel",
   summary: "j/k:scroll  c:copy  s/Esc:back to board  q:quit",
   detail: "j/k:select field  Enter/e:edit  Esc:back to board  q:quit",
   "confirm-delete": "Y:confirm delete  N:cancel",
