@@ -8,39 +8,6 @@ interface TaskCardProps {
   isSelected: boolean;
 }
 
-function clampText(text: string, maxLines: number, lineWidth: number): string {
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let currentLine = "";
-
-  for (const word of words) {
-    const candidate = currentLine ? `${currentLine} ${word}` : word;
-    if (candidate.length > lineWidth && currentLine) {
-      lines.push(currentLine);
-      if (lines.length >= maxLines) break;
-      currentLine = word;
-    } else {
-      currentLine = candidate;
-    }
-  }
-
-  if (lines.length < maxLines && currentLine) {
-    lines.push(currentLine);
-  }
-
-  if (lines.length >= maxLines) {
-    const last = lines[maxLines - 1];
-    if (words.join(" ").length > lines.join(" ").length && last) {
-      lines[maxLines - 1] =
-        last.length > lineWidth - 1
-          ? last.slice(0, lineWidth - 1) + "…"
-          : last + "…";
-    }
-  }
-
-  return lines.slice(0, maxLines).join("\n");
-}
-
 export function TaskCard({ task, isSelected }: TaskCardProps) {
   return (
     <Box
@@ -48,7 +15,6 @@ export function TaskCard({ task, isSelected }: TaskCardProps) {
       paddingX={1}
       borderStyle={isSelected ? "bold" : undefined}
       borderColor={isSelected ? "cyan" : undefined}
-      marginBottom={task.description && isSelected ? 0 : 0}
     >
       {/* Title row */}
       <Box flexDirection="row">
@@ -65,12 +31,10 @@ export function TaskCard({ task, isSelected }: TaskCardProps) {
         ) : null}
       </Box>
 
-      {/* Description (3-line clamped, only when selected) */}
+      {/* Description expanded when selected */}
       {task.description && isSelected ? (
-        <Box paddingLeft={6} marginTop={0}>
-          <Text dimColor wrap="truncate">
-            {clampText(task.description, 3, 40)}
-          </Text>
+        <Box paddingLeft={6}>
+          <Text dimColor>{task.description}</Text>
         </Box>
       ) : null}
     </Box>

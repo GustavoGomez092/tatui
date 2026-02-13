@@ -138,7 +138,7 @@ export function TaskInput({
           </Box>
         ) : null}
         <Text dimColor>
-          Enter/Tab: select | Type: new project | Esc: back
+          Type to filter or create new | j/k to browse
         </Text>
       </Box>
     );
@@ -162,11 +162,9 @@ export function TaskInput({
           isActive={isActive}
         />
       </Box>
-      <Text dimColor>
-        {usingShorthand
-          ? "Tab: autocomplete project | Enter: create"
-          : "Enter: next (select project) | Esc: cancel"}
-      </Text>
+      {usingShorthand ? (
+        <Text dimColor>Shorthand detected — Enter to create</Text>
+      ) : null}
     </Box>
   );
 }

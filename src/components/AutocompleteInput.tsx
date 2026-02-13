@@ -63,17 +63,15 @@ export function AutocompleteInput({
 
   return (
     <Box>
-      <Text>
-        {value ? (
-          <>
-            <Text color="white">{value}</Text>
-            {ghostText ? <Text dimColor>{ghostText}</Text> : null}
-          </>
-        ) : (
-          <Text dimColor>{placeholder}</Text>
-        )}
-      </Text>
       {isActive ? <Text color="cyan">▎</Text> : null}
+      {value ? (
+        <>
+          <Text color="white">{value}</Text>
+          {ghostText ? <Text dimColor>{ghostText}</Text> : null}
+        </>
+      ) : (
+        <Text dimColor>{placeholder}</Text>
+      )}
     </Box>
   );
 }
