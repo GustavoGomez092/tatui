@@ -10,6 +10,7 @@ interface SummaryViewProps {
   tasks: TaskWithProject[];
   weekId: string;
   firstVisibleDay?: number;
+  viewportHeight?: number;
 }
 
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -85,7 +86,7 @@ export function getActiveDayCount(tasks: TaskWithProject[]): number {
   return days.size;
 }
 
-export function SummaryView({ tasks, weekId, firstVisibleDay = 0 }: SummaryViewProps) {
+export function SummaryView({ tasks, weekId, firstVisibleDay = 0, viewportHeight }: SummaryViewProps) {
   const byDay = groupByDay(tasks);
   const totalMinutes = tasks.reduce((s, t) => s + (t.durationMinutes ?? 0), 0);
   const doneMinutes = tasks
@@ -105,10 +106,9 @@ export function SummaryView({ tasks, weekId, firstVisibleDay = 0 }: SummaryViewP
   // Slice from firstVisibleDay onwards
   const visibleGroups = dayGroups.slice(firstVisibleDay);
   const hasAbove = firstVisibleDay > 0;
-  const hasBelow = false; // We render all from firstVisibleDay down; terminal will clip naturally
 
-  return (
-    <Box flexDirection="column" paddingX={1} flexGrow={1}>
+  const inner = (
+    <Box flexDirection="column" flexShrink={0}>
       {/* Summary header */}
       <Box justifyContent="space-between" marginBottom={1}>
         <Text bold>
@@ -174,6 +174,12 @@ export function SummaryView({ tasks, weekId, firstVisibleDay = 0 }: SummaryViewP
           Press Esc to go back to the board, or 'n' to add your first task.
         </Alert>
       ) : null}
+    </Box>
+  );
+
+  return (
+    <Box flexDirection="column" paddingX={1} flexGrow={1} height={viewportHeight} overflow="hidden">
+      {inner}
     </Box>
   );
 }

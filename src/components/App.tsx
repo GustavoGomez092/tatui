@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { Box, Text, useInput, useApp } from "ink";
+import { Box, Text, useInput, useApp, useStdout } from "ink";
 import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput, StatusMessage, Spinner } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
@@ -51,8 +51,11 @@ export function App() {
   const [firstVisibleDay, setFirstVisibleDay] = useState(0);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { stdout } = useStdout();
 
   const summaryDayCount = useMemo(() => getActiveDayCount(tasks), [tasks]);
+  // Viewport height for summary (subtract header ~3, helpbar ~1, messages ~2)
+  const summaryViewportHeight = Math.max(5, (stdout?.rows ?? 24) - 6);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -318,7 +321,7 @@ export function App() {
           isActive={mode === "detail"}
         />
       ) : mode === "summary" ? (
-        <SummaryView tasks={tasks} weekId={weekId} firstVisibleDay={firstVisibleDay} />
+        <SummaryView tasks={tasks} weekId={weekId} firstVisibleDay={firstVisibleDay} viewportHeight={summaryViewportHeight} />
       ) : (
         <Board
           tasksByStatus={filteredTasks}
