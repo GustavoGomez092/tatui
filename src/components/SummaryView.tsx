@@ -9,6 +9,8 @@ import { formatDuration } from "../utils/week.js";
 interface SummaryViewProps {
   tasks: TaskWithProject[];
   weekId: string;
+  scrollOffset?: number;
+  viewportHeight?: number;
 }
 
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -75,7 +77,15 @@ for (const [, info] of Object.entries(STATUS_LABELS)) {
   STATUS_COLOR_BY_LABEL[info.label] = info.color;
 }
 
-export function SummaryView({ tasks, weekId }: SummaryViewProps) {
+/**
+ * Estimate the number of terminal lines a day group occupies.
+ * dayHeader(1) + tableTop(1) + tableHeader(1) + rows*(separator+data=2) + tableBottom(1) + margin(1) = 5 + 2*count
+ */
+function estimateDayLines(taskCount: number): number {
+  return 5 + 2 * taskCount;
+}
+
+export function SummaryView({ tasks, weekId, scrollOffset = 0, viewportHeight }: SummaryViewProps) {
   const byDay = groupByDay(tasks);
   const totalMinutes = tasks.reduce((s, t) => s + (t.durationMinutes ?? 0), 0);
   const doneMinutes = tasks
@@ -83,8 +93,8 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
     .reduce((s, t) => s + (t.durationMinutes ?? 0), 0);
   const doneCount = tasks.filter((t) => t.status === "done").length;
 
-  return (
-    <Box flexDirection="column" paddingX={1} flexGrow={1}>
+  const content = (
+    <Box flexDirection="column" marginTop={-scrollOffset}>
       {/* Summary header */}
       <Box justifyContent="space-between" marginBottom={1}>
         <Text bold>
@@ -128,7 +138,6 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
               maxColumnWidths={MAX_COLUMN_WIDTHS}
               cell={({ children, columnKey }) => {
                 if (columnKey === "Status") {
-                  // Extract the status label from the padded string
                   const trimmed = String(children).trim();
                   const color = STATUS_COLOR_BY_LABEL[trimmed] ?? "white";
                   return <Text color={color}>{children}</Text>;
@@ -148,6 +157,20 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
           Press Esc to go back to the board, or 'n' to add your first task.
         </Alert>
       ) : null}
+    </Box>
+  );
+
+  if (viewportHeight) {
+    return (
+      <Box flexDirection="column" paddingX={1} flexGrow={1} height={viewportHeight} overflow="hidden">
+        {content}
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column" paddingX={1} flexGrow={1}>
+      {content}
     </Box>
   );
 }

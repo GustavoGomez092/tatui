@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Box, Text, useInput, useApp } from "ink";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { Box, Text, useInput, useApp, useStdout } from "ink";
 import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput, StatusMessage, Spinner } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
@@ -48,8 +48,29 @@ export function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [scrollOffset, setScrollOffset] = useState(0);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { stdout } = useStdout();
+
+  // Viewport height for summary scroll (subtract header ~3, helpbar ~1, messages ~2)
+  const viewportHeight = Math.max(5, (stdout?.rows ?? 24) - 6);
+
+  // Estimate total content lines for summary scroll max
+  const summaryMaxScroll = useMemo(() => {
+    const byDay = new Map<number, number>();
+    for (const task of tasks) {
+      const d = new Date(task.createdAt);
+      const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
+      byDay.set(day, (byDay.get(day) ?? 0) + 1);
+    }
+    // header(2) + per day: header(1) + table(3 + 2*count) + margin(1)
+    let total = 2;
+    for (const count of byDay.values()) {
+      total += 5 + 2 * count;
+    }
+    return Math.max(0, total - viewportHeight);
+  }, [tasks, viewportHeight]);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -114,6 +135,7 @@ export function App() {
 
       // Summary view toggle
       if (input === "s") {
+        setScrollOffset(0);
         setMode("summary");
         return;
       }
@@ -240,6 +262,16 @@ export function App() {
         copyToClipboard();
         return;
       }
+      // Scroll down
+      if (input === "j" || key.downArrow) {
+        setScrollOffset((prev) => Math.min(prev + 1, summaryMaxScroll));
+        return;
+      }
+      // Scroll up
+      if (input === "k" || key.upArrow) {
+        setScrollOffset((prev) => Math.max(prev - 1, 0));
+        return;
+      }
       if (input === "s" || input === "q" || key.escape) {
         if (input === "q") {
           exit();
@@ -301,7 +333,7 @@ export function App() {
           isActive={mode === "detail"}
         />
       ) : mode === "summary" ? (
-        <SummaryView tasks={tasks} weekId={weekId} />
+        <SummaryView tasks={tasks} weekId={weekId} scrollOffset={scrollOffset} viewportHeight={viewportHeight} />
       ) : (
         <Board
           tasksByStatus={filteredTasks}
