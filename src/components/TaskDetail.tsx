@@ -110,9 +110,11 @@ export function TaskDetail({
           break;
       }
 
-      setEditing(false);
       setEditValue("");
       setErrorMsg(null);
+      // Defer setEditing(false) so the navigation-mode useInput handler
+      // doesn't catch the same Enter keypress on the same tick
+      setTimeout(() => setEditing(false), 0);
     },
     [currentField, task.id, onUpdateField, onChangeProject]
   );

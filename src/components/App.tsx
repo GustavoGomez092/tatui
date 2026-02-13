@@ -215,14 +215,14 @@ export function App() {
 
   const handleDetailChangeProject = useCallback(
     (id: number, projectName: string) => {
-      changeProject(id, projectName);
-      refresh();
+      const updated = changeProject(id, projectName);
       refreshProjects();
-      // Return to board since project info changed on the task object
-      setDetailTask(null);
-      setMode("navigate");
+      // Stay in detail view with updated project info
+      if (updated) {
+        setDetailTask(updated);
+      }
     },
-    [changeProject, refresh, refreshProjects]
+    [changeProject, refreshProjects]
   );
 
   useInput(
