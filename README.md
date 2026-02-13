@@ -10,7 +10,9 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 │ ○ To Do  (3) ││ ◐ Active (2) ││ ● Done   (2) ││ ◌ Archive(1) │
 │              ││              ││              ││              │
 │ [WRK] Auth   ││ [WRK] API    ││ [PER] Grocr  ││ [WRK] Setup  │
+│              ││              ││              ││              │
 │ [PER] Taxes  ││ [WRK] Tests  ││ [WRK] Deploy ││              │
+│              ││              ││              ││              │
 │ [WRK] Docs   ││              ││              ││              │
 └──────────────┘└──────────────┘└──────────────┘└──────────────┘
  h/l:columns  j/k:rows  Enter:advance  b:back  o:open  n:new  d:delete  p:filter  s:summary  q:quit
@@ -25,6 +27,7 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Interactive TUI](#interactive-tui)
+  - [Full-Screen Mode](#full-screen-mode)
   - [Board Layout](#board-layout)
   - [Keyboard Shortcuts](#keyboard-shortcuts)
   - [Creating Tasks](#creating-tasks)
@@ -55,15 +58,16 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 - **Weekly cycle** — fresh board every Monday, incomplete tasks auto-rollover
 - **Project system** — tasks belong to projects, filter the board by project
 - **Shorthand syntax** — create tasks fast: `work::Fix bug::Auth broken::2h`
-- **Autocomplete** — Tab-to-accept project names with ghost text
+- **Autocomplete** — Tab-to-accept project names with case-insensitive ghost text
 - **Duration tracking** — forecast time per task, see totals in the header
 - **Vim-style navigation** — `h/j/k/l` keys, `Enter` to advance, `b` to move back
-- **Task detail view** — press `o` to open a full detail panel for any task
+- **Task detail view** — press `o` to open a full detail panel with inline editing of all fields (title, project, description, duration)
 - **Expand-on-select cards** — selected task cards expand to show the full description inline
-- **Delete confirmation** — `d` prompts for confirmation before removing a task
+- **Delete confirmation** — `d` prompts Y/N confirmation before removing a task
 - **Graceful error handling** — invalid input shows inline errors, the app never crashes
-- **Week summary view** — press `s` for a daily breakdown with project, title, description, time, and status per task — designed for copy/paste into billing and time-tracking systems
-- **Week summaries** — stats and per-project breakdowns, exportable via CLI
+- **Week summary table** — press `s` for a bordered table grouped by day with project, title, description, time, and status — designed for copy/paste into billing and time-tracking systems
+- **Clipboard copy** — press `c` in summary view to copy all tasks as tab-separated values (TSV) to your clipboard, ready to paste into spreadsheets or time-tracking systems
+- **Full-screen mode** — uses the terminal's alternate screen buffer, restoring previous terminal content on exit
 - **Single-command install** — `curl ... | bash` or `npm install -g tatui`
 - **Local-first** — all data in a local SQLite database, never leaves your machine
 - **Zero configuration** — just run `tatui` and start adding tasks
@@ -144,6 +148,13 @@ tatui projects
 
 ## Interactive TUI
 
+### Full-Screen Mode
+
+TATUI uses the terminal's **alternate screen buffer** when launching the interactive board. This means:
+- The board takes over the full terminal screen on startup
+- When you quit (`q`), your previous terminal content is fully restored
+- This is the same behavior as `vim`, `htop`, and other full-screen terminal applications
+
 ### Board Layout
 
 The board has 4 columns, each representing a task status:
@@ -201,9 +212,6 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 |-----|--------|
 | Type characters | Filter/type a project name |
 | `Tab` | Accept autocomplete suggestion |
-| `j` or `Down Arrow` | Move highlight down in the project list |
-| `k` or `Up Arrow` | Move highlight up in the project list |
-| `Enter` (empty input) | Select the highlighted project |
 | `Enter` (with text) | Use the typed project name (auto-creates if new) |
 | `Escape` | Go back to step 1 |
 
@@ -211,27 +219,27 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 
 | Key | Action |
 |-----|--------|
-| `Enter` | Advance the task to the next column |
-| `b` | Move the task back to the previous column |
-| `e` | Edit the task title inline |
-| `d` | Delete the task |
-| `Escape` or `q` | Close and return to the board |
+| `j` or `Down Arrow` | Move focus to the next field |
+| `k` or `Up Arrow` | Move focus to the previous field |
+| `Enter` or `e` | Start editing the focused field |
+| `Enter` (while editing) | Save the field edit |
+| `Escape` (while editing) | Cancel the field edit |
+| `Escape` or `q` (while navigating) | Close and return to the board |
 
 #### Summary Mode (press `s` from navigate mode)
 
 | Key | Action |
 |-----|--------|
-| `j` or `Down Arrow` | Scroll down |
-| `k` or `Up Arrow` | Scroll up |
-| `s` | Return to the board |
-| `Escape` | Return to the board |
+| `c` | Copy all tasks to clipboard as TSV |
+| `s` or `Escape` | Return to the board |
+| `q` | Quit TATUI |
 
 #### Delete Confirmation (press `d` from navigate mode)
 
 | Key | Action |
 |-----|--------|
-| `y` | Confirm deletion |
-| Any other key | Cancel, task is preserved |
+| `Y` | Confirm deletion |
+| `N` or `Escape` | Cancel, task is preserved |
 
 ### Creating Tasks
 
@@ -283,14 +291,16 @@ When using 3 segments, TATUI automatically detects whether the third segment is 
 When creating a task, project names autocomplete as you type:
 
 ```
-Input:   wo                    → ghost text shows: rk
+Input:   wo                    → ghost text shows: rk::
 Display: wo|rk::               (dimmed "rk::" is the suggestion)
 Press Tab: work::              (accepted, cursor ready for title)
 ```
 
-- Suggestions are case-insensitive prefix matches
-- Press `Tab` to accept the suggestion
+- Suggestions are **case-insensitive** prefix matches (typing `eli` matches `ELITE Enterprise`)
+- Press `Tab` to accept the suggestion without submitting
+- Press `Enter` to accept the suggestion and submit
 - If no match exists, you're creating a new project
+- Autocomplete is available in both the task creation form and the detail view's project field
 
 ### Project Filtering
 
@@ -320,47 +330,40 @@ To Do → In Progress → Done → Archived
 
 ### Deleting Tasks
 
-Press `d` on a selected task to delete it. TATUI will ask for confirmation before removing anything:
+Press `d` on a selected task to delete it. TATUI will show a Y/N confirmation prompt:
 
 ```
-Delete "Deploy staging"? y to confirm / any key to cancel
+Delete "Deploy staging"? (Y/n)
 ```
 
-- Press `y` to confirm the deletion
-- Press **any other key** (`n`, `Escape`, or anything else) to cancel — the task is preserved
-- This prevents accidental deletion from a mistyped key
+- Press `Y` to confirm the deletion
+- Press `N` or `Escape` to cancel — the task is preserved
+- Default is cancel — accidental Enter won't delete
 
 ### Task Detail View
 
-Press `o` to open a **detail panel** for the selected task. The board is replaced with a full view of the task's information:
+Press `o` to open a **detail panel** for the selected task. The board is replaced with a full view of the task's information. All fields are editable inline:
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  TASK DETAIL                                                 ║
-╠══════════════════════════════════════════════════════════════╣
+║  Status: In Progress    Created: 2/10/2026                  ║
 ║                                                              ║
-║  Project     [CMH] CMH Website                               ║
-║  Title       Deploy to staging                               ║
-║  Description Push latest build to staging environment        ║
-║              for QA team review before production release     ║
-║  Duration    2h                                              ║
-║  Status      ◐ In Progress                                   ║
-║                                                              ║
-║  ──────────────────────────────────────────────────────────  ║
-║                                                              ║
-║  Created     Monday, Feb 10 2026 at 9:15 AM                 ║
-║  Updated     Wednesday, Feb 12 2026 at 3:42 PM              ║
-║  Week        2026-W07                                        ║
+║  > Title:       Deploy to staging                           ║
+║    Project:     CMH Website                                 ║
+║    Description: Push latest build to staging environment    ║
+║    Duration:    2h                                           ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
- Esc:back  e:edit  Enter:advance  b:back  d:delete
+ j/k:select field  Enter/e:edit  Esc:back to board  q:quit
 ```
 
-From within the detail view you can:
-- **Advance** or **move back** the task (`Enter` / `b`)
-- **Edit** the task title inline (`e`)
-- **Delete** the task (`d`)
-- **Close** and return to the board (`Escape` or `q`)
+**Editable fields:**
+- **Title** — text input, cannot be empty
+- **Project** — text input with autocomplete for existing project names, auto-creates new projects
+- **Description** — text input, can be empty
+- **Duration** — time format input (e.g., `15m`, `1h`, `1.5h`, `2h`, `1d`), validates format
+
+Navigate between fields with `j`/`k`, press `Enter` or `e` to edit, `Escape` to cancel an edit, `Escape` or `q` to return to the board. Changes are saved to the database immediately on confirmation.
 
 ### Task Cards
 
@@ -368,26 +371,32 @@ Task cards in the columns show a compact single-line view by default. When you *
 
 **Unselected cards** (compact):
 ```
- [WRK] Deploy staging            2h
- [WRK] Fix auth bug              1h
- [PER] Buy groceries
+ WRK  Deploy staging            2h
+
+ WRK  Fix auth bug              1h
+
+ PER  Buy groceries
 ```
 
 **Selected card** (expanded with description):
 ```
 ┌────────────────────────────────────────┐
-│ [WRK] Deploy staging              2h  │
-│  Push latest build to staging         │
-│  environment for QA team review       │
-│  before production release            │
+│ WRK  Deploy staging              2h   │
+│      Push latest build to staging     │
+│      environment for QA team review   │
+│      before production release        │
 └────────────────────────────────────────┘
- [WRK] Fix auth bug              1h
- [PER] Buy groceries
+
+ WRK  Fix auth bug              1h
+
+ PER  Buy groceries
 ```
 
+- Project names are shown as colored badges (first 3 characters, uppercased)
 - Only the selected card expands — the rest stay compact to keep the columns clean
 - Tasks without a description show the title line only, even when selected
 - The description text is dimmed to distinguish it from the title
+- Cards have vertical spacing between them for readability
 
 ### Duration Tracking
 
@@ -401,82 +410,60 @@ Tasks can have optional time forecasts:
 
 ### Week Summary View
 
-Press `s` to toggle the **week summary view** — a daily breakdown of all tasks for the current week. This view is designed for quick scanning and copy/pasting into company time-tracking or billing systems.
+Press `s` to toggle the **week summary view** — a bordered table of all tasks for the current week, grouped by day. This view is designed for quick scanning and copy/pasting into company time-tracking or billing systems.
 
 ```
-WEEK SUMMARY — 2026-W07                    Tasks: 8/12 · Time: 6h 30m/10h
+Week Summary — 2026-W07                     1/7 tasks  1h/23h
 
-MONDAY
-───────────────────────────────────────────────────────────────────────────
-[WORK]  Deploy staging      Push latest build           1h      ● Done
-[WORK]  Fix auth bug        Token refresh broken        2h      ◐ Active
-[PERS]  Call dentist        Schedule cleaning           30m     ● Done
+Thursday (23h)
+┌──────────────┬──────────┬──────────────────────────────┬──────┬───────────┐
+│ Project      │ Title    │ Description                  │ Time │ Status    │
+├──────────────┼──────────┼──────────────────────────────┼──────┼───────────┤
+│ New Project  │ Website  │ Adding new sorting filter     │ 3h   │ IN PROG   │
+├──────────────┼──────────┼──────────────────────────────┼──────┼───────────┤
+│ CMHoF        │ Website  │ Adding new copy to the events │ 1h   │ DONE      │
+│              │          │ page and about page           │      │           │
+├──────────────┼──────────┼──────────────────────────────┼──────┼───────────┤
+│ HSP          │ Website  │ Creating a new filtering      │ 4h   │ IN PROG   │
+│              │          │ system from the main API      │      │           │
+├──────────────┼──────────┼──────────────────────────────┼──────┼───────────┤
+│ HSP          │ Website  │ New search feature on the     │ 2h   │ TODO      │
+│              │          │ site header                   │      │           │
+└──────────────┴──────────┴──────────────────────────────┴──────┴───────────┘
 
-TUESDAY
-───────────────────────────────────────────────────────────────────────────
-[WORK]  Code review         PR #42 feedback             30m     ● Done
-[WORK]  API refactor        REST to GraphQL             4h      ◐ Active
-[SIDE]  Blog post           React Ink tutorial          1.5h    ○ To Do
-
-WEDNESDAY
-───────────────────────────────────────────────────────────────────────────
-[PERS]  Pay bills           Utilities + rent            30m     ○ To Do
-[WORK]  Write tests         Unit tests auth module      2h      ● Done
-
-THURSDAY
-───────────────────────────────────────────────────────────────────────────
-[SIDE]  Setup CI            GitHub Actions config       30m     ○ To Do
-
-FRIDAY
-───────────────────────────────────────────────────────────────────────────
-[WORK]  Update docs         API docs outdated           1h      ◐ Active
-[WORK]  Initial setup       Project scaffolding         —       ◌ Arch.
-
-───────────────────────────────────────────────────────────────────────────
-BY PROJECT
-work:       6/8 tasks    8h 30m
-personal:   2/3 tasks    1h 30m
-side:       0/1 tasks    1h 30m
-
- s:board  j/k:scroll  Esc:board
+ c:copy  s/Esc:back to board  q:quit
 ```
 
 #### Layout
 
 Tasks are **grouped by day of the week** (Monday through Sunday), based on the day they were created. Only days with tasks are shown — empty days are skipped.
 
-Each task row has 5 columns:
+Each task row has 5 columns in a bordered table:
 
 | Column | Description | Example |
 |--------|-------------|---------|
-| **Project** | First 3 letters, uppercased, colored | `[WORK]` |
-| **Title** | Task name, truncated if long | `Deploy staging` |
-| **Description** | Task description, dimmed. `—` if empty | `Push latest build` |
-| **Duration** | Forecasted time. `—` if not set | `1h` |
-| **Status** | Board status with icon, colored | `● Done` |
+| **Project** | Full project name | `CMHoF` |
+| **Title** | Task name | `Website` |
+| **Description** | Full task description, word-wrapped within cell | `Adding new copy to the events page` |
+| **Time** | Forecasted duration | `1h` |
+| **Status** | Color-coded status label | `DONE` |
 
-Status indicators match the board columns:
+The table uses Unicode box-drawing characters for borders and automatically word-wraps long descriptions within cells — no text is truncated. This ensures full visibility for copy/paste workflows.
 
-| Icon | Label | Color |
-|------|-------|-------|
-| `○` | To Do | Blue |
-| `◐` | Active | Yellow |
-| `●` | Done | Green |
-| `◌` | Arch. | Gray |
+#### Clipboard Copy
 
-#### Per-project subtotals
+Press `c` in summary view to copy all tasks as **tab-separated values (TSV)** to your system clipboard:
 
-At the bottom of the summary, a **BY PROJECT** section shows totals per project:
-- Completed tasks out of total
-- Total forecasted duration
+```
+Day	Project	Title	Description	Time	Status
+Thursday	New Project	Website	Adding new sorting filter	3h	IN PROGRESS
+Thursday	CMHoF	Website	Adding new copy to the events page and about page	1h	DONE
+```
 
-This matches how most billing systems expect hours to be grouped — by client or project.
-
-#### Scrolling
-
-The summary view supports scrolling for weeks with many tasks:
-- `j` or `Down Arrow` to scroll down
-- `k` or `Up Arrow` to scroll up
+The TSV format pastes directly into:
+- **Google Sheets / Excel** — auto-separates into columns
+- **Harvest / Toggl** — for time-tracking entry
+- **Jira / Asana** — for task synchronization
 
 Press `s` or `Escape` to return to the board.
 
@@ -516,19 +503,6 @@ The summary includes:
 - Total forecasted time and completed time
 - Per-project breakdown with task counts and durations
 
-Example output:
-
-```
-# Week 2026-W07 Summary
-
-Tasks: 5/8 completed
-Time: 3.5h/6h
-
-## By Project
-- work: 3/5 tasks (4h)
-- personal: 2/3 tasks (2h)
-```
-
 ---
 
 ## CLI Commands
@@ -537,7 +511,7 @@ TATUI can be used both as an interactive TUI and as a command-line tool.
 
 ### `tatui` or `tatui board`
 
-Launches the interactive Kanban board in your terminal.
+Launches the interactive Kanban board in your terminal (full-screen mode).
 
 ```bash
 tatui
@@ -598,9 +572,9 @@ tatui -h
 
 Every task in TATUI belongs to a **project**. Projects are created automatically the first time they are referenced by name.
 
-- Project names are **case-sensitive** as stored but matched for display purposes
+- Project names are stored as-is but **autocomplete matching is case-insensitive**
 - Each project is automatically assigned a **color** from a rotating palette of 10 colors
-- Colors are used for the `[TAG]` badges on task cards (first 3 characters, uppercased)
+- Colors are used for the badge on task cards (first 3 characters, uppercased)
 - Projects persist across weeks
 
 **Color palette (auto-assigned in order):**
@@ -676,7 +650,7 @@ The directory is created automatically on first launch.
 │  ┌────────────┐   ┌───────────┐   ┌──────────────────┐ │
 │  │  React Ink  │──▶│   Hooks   │──▶│   Data Layer     │ │
 │  │  Components │   │ useTasks  │   │ db/tasks.ts      │ │
-│  │  (TUI)     │◀──│ useProjects│◀──│ db/projects.ts   │ │
+│  │  + @inkjs/ui│◀──│ useProjects│◀──│ db/projects.ts   │ │
 │  └────────────┘   │ useFilter │   │ db/weeks.ts      │ │
 │                    └───────────┘   └────────┬─────────┘ │
 │                                             │           │
@@ -699,9 +673,11 @@ The directory is created automatically on first launch.
 | Layer | Technology |
 |-------|------------|
 | Terminal UI | React Ink v6.7 |
+| UI Components | @inkjs/ui (TextInput, ConfirmInput, Badge, StatusMessage) |
 | State management | React hooks (useState, useMemo, useEffect) |
 | ORM | Drizzle ORM |
 | Database driver | better-sqlite3 |
+| Clipboard | clipboardy |
 | Data directory | env-paths |
 | Language | TypeScript (ESM) |
 
@@ -709,17 +685,17 @@ The directory is created automatically on first launch.
 
 ```
 src/
-├── cli.tsx                  # CLI entry point, argument parsing
+├── cli.tsx                  # CLI entry point, argument parsing, alt screen buffer
 ├── components/
-│   ├── App.tsx              # Root component, keyboard handling, state
-│   ├── AutocompleteInput.tsx # Text input with ghost text autocomplete
+│   ├── App.tsx              # Root component, keyboard handling, mode state
 │   ├── Board.tsx            # 4-column Kanban layout
 │   ├── Column.tsx           # Single column with header and task list
 │   ├── Header.tsx           # Top bar: week, stats, filter indicator
 │   ├── HelpBar.tsx          # Bottom bar: context-sensitive shortcuts
 │   ├── SummaryView.tsx      # Week summary view grouped by day (press 's')
+│   ├── Table.tsx            # Custom bordered table component with word-wrap
 │   ├── TaskCard.tsx         # Individual task card with expand-on-select
-│   ├── TaskDetail.tsx       # Full task detail panel (press 'o')
+│   ├── TaskDetail.tsx       # Full task detail panel with inline field editing
 │   └── TaskInput.tsx        # Two-step task creation form
 ├── db/
 │   ├── index.ts             # Database connection, initialization
@@ -731,9 +707,11 @@ src/
 │   ├── useProjectFilter.ts  # Project filter cycling and application
 │   ├── useProjects.ts       # React state wrapper for project operations
 │   └── useTasks.ts          # React state wrapper for task operations
-└── utils/
-    ├── parser.ts            # Shorthand syntax parser (project::title::desc::dur)
-    └── week.ts              # ISO week calculations and duration formatting
+├── utils/
+│   ├── parser.ts            # Shorthand syntax parser (project::title::desc::dur)
+│   └── week.ts              # ISO week calculations and duration formatting
+└── patches/
+    └── @inkjs+ui+2.0.0.patch  # Case-insensitive autocomplete + Tab-to-accept fix
 ```
 
 ---
