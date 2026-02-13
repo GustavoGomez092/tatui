@@ -4,6 +4,21 @@ A weekly terminal Kanban board. Manage your tasks in 4 columns — **To Do**, **
 
 Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, stores everything locally.
 
+### Kanban Board
+![Kanban Board — 4-column layout with color-coded project badges and expand-on-select cards](screenshots/1.png)
+
+### Task Creation
+![Task Creation — guided input form with shorthand syntax and autocomplete](screenshots/2.png)
+
+### Week Summary
+![Week Summary — bordered table grouped by day for copy/paste into time-tracking systems](screenshots/3.png)
+
+### Task Detail
+![Task Detail — full detail panel with inline editing of all fields](screenshots/4.png)
+
+<details>
+<summary>Text-based preview (for terminals without image support)</summary>
+
 ```
  TATUI   2026-W07                              2/5/8  ○  1.5h/6h
 ┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐
@@ -17,6 +32,8 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 └──────────────┘└──────────────┘└──────────────┘└──────────────┘
  h/l:columns  j/k:rows  Enter:advance  b:back  o:open  n:new  d:delete  p:filter  s:summary  q:quit
 ```
+
+</details>
 
 ---
 
