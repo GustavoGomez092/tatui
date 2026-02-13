@@ -13,7 +13,7 @@ import { useProjectFilter } from "../hooks/useProjectFilter.js";
 import { getWeekId } from "../utils/week.js";
 import { rolloverTasks } from "../db/weeks.js";
 
-type AppMode = "navigate" | "input" | "summary" | "detail";
+type AppMode = "navigate" | "input" | "summary" | "detail" | "confirm-delete";
 
 export function App() {
   const weekId = getWeekId();
@@ -27,6 +27,7 @@ export function App() {
   const [selectedRow, setSelectedRow] = useState(0);
   const [mode, setMode] = useState<AppMode>("navigate");
   const [detailTask, setDetailTask] = useState<TaskWithProject | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TaskWithProject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -158,12 +159,12 @@ export function App() {
         return;
       }
 
-      // Delete task
+      // Delete task (with confirmation)
       if (input === "d" && currentTasks.length > 0) {
         const task = currentTasks[selectedRow];
         if (task) {
-          remove(task.id);
-          setSelectedRow(Math.max(0, selectedRow - 1));
+          setDeleteTarget(task);
+          setMode("confirm-delete");
         }
         return;
       }
@@ -204,6 +205,23 @@ export function App() {
     { isActive: mode === "detail" }
   );
 
+  useInput(
+    (input, key) => {
+      if (input === "y" && deleteTarget) {
+        remove(deleteTarget.id);
+        setSelectedRow(Math.max(0, selectedRow - 1));
+        setDeleteTarget(null);
+        setMode("navigate");
+        return;
+      }
+      if (input === "n" || key.escape) {
+        setDeleteTarget(null);
+        setMode("navigate");
+      }
+    },
+    { isActive: mode === "confirm-delete" }
+  );
+
   return (
     <Box flexDirection="column" width="100%">
       <Header weekId={weekId} tasks={tasks} activeFilter={activeFilter ?? undefined} />
@@ -227,6 +245,15 @@ export function App() {
           onCancel={() => setMode("navigate")}
           isActive={mode === "input"}
         />
+      ) : null}
+
+      {mode === "confirm-delete" && deleteTarget ? (
+        <Box paddingX={1} borderStyle="single" borderColor="red">
+          <Text color="red" bold>Delete </Text>
+          <Text bold>"{deleteTarget.title}"</Text>
+          <Text color="red" bold>? </Text>
+          <Text dimColor>(y/n)</Text>
+        </Box>
       ) : null}
 
       {errorMsg ? (
