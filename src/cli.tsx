@@ -53,7 +53,12 @@ switch (command) {
 
   case undefined:
   case "board": {
-    // Launch the TUI
+    // Enter alternate screen buffer (like vim/htop)
+    process.stdout.write("\x1B[?1049h\x1B[2J\x1B[0;0H");
+    // Restore on exit
+    process.on("exit", () => {
+      process.stdout.write("\x1B[?1049l");
+    });
     render(<App />);
     break;
   }
