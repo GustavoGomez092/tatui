@@ -1,4 +1,4 @@
-# TATUI
+# TATUI — Task TUI
 
 A weekly terminal Kanban board. Manage your tasks in 4 columns — **To Do**, **In Progress**, **Done**, and **Archived** — with a fresh board every Monday.
 
@@ -13,7 +13,7 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 │ [PER] Taxes  ││ [WRK] Tests  ││ [WRK] Deploy ││              │
 │ [WRK] Docs   ││              ││              ││              │
 └──────────────┘└──────────────┘└──────────────┘└──────────────┘
- h/l:columns  j/k:rows  Enter:advance  b:back  n:new  p:filter  s:summary  q:quit
+ h/l:columns  j/k:rows  Enter:advance  b:back  o:open  n:new  d:delete  p:filter  s:summary  q:quit
 ```
 
 ---
@@ -32,6 +32,9 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
   - [Project Autocomplete](#project-autocomplete)
   - [Project Filtering](#project-filtering)
   - [Moving Tasks](#moving-tasks)
+  - [Deleting Tasks](#deleting-tasks)
+  - [Task Detail View](#task-detail-view)
+  - [Task Cards](#task-cards)
   - [Duration Tracking](#duration-tracking)
   - [Week Summary View](#week-summary-view)
 - [Weekly Cycle](#weekly-cycle)
@@ -55,6 +58,10 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 - **Autocomplete** — Tab-to-accept project names with ghost text
 - **Duration tracking** — forecast time per task, see totals in the header
 - **Vim-style navigation** — `h/j/k/l` keys, `Enter` to advance, `b` to move back
+- **Task detail view** — press `o` to open a full detail panel for any task
+- **Expand-on-select cards** — selected task cards expand to show the full description inline
+- **Delete confirmation** — `d` prompts for confirmation before removing a task
+- **Graceful error handling** — invalid input shows inline errors, the app never crashes
 - **Week summary view** — press `s` for a daily breakdown with project, title, description, time, and status per task — designed for copy/paste into billing and time-tracking systems
 - **Week summaries** — stats and per-project breakdowns, exportable via CLI
 - **Single-command install** — `curl ... | bash` or `npm install -g tatui`
@@ -168,8 +175,9 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 | `j` or `Down Arrow` | Move selection down within the current column |
 | `Enter` | Advance the selected task to the next column |
 | `b` | Move the selected task back to the previous column |
+| `o` | Open task detail view for the selected task |
 | `n` | Create a new task (opens input form) |
-| `d` | Delete the selected task |
+| `d` | Delete the selected task (with confirmation) |
 | `p` | Cycle through project filters |
 | `s` | Toggle the week summary view |
 | `r` | Refresh tasks from the database |
@@ -187,15 +195,6 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 | `Enter` | Submit shorthand directly, or advance to project selection |
 | `Escape` | Cancel and return to the board |
 
-#### Summary Mode (press `s` from navigate mode)
-
-| Key | Action |
-|-----|--------|
-| `j` or `Down Arrow` | Scroll down |
-| `k` or `Up Arrow` | Scroll up |
-| `s` | Return to the board |
-| `Escape` | Return to the board |
-
 **Step 2 — Project selection (plain titles only):**
 
 | Key | Action |
@@ -207,6 +206,32 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 | `Enter` (empty input) | Select the highlighted project |
 | `Enter` (with text) | Use the typed project name (auto-creates if new) |
 | `Escape` | Go back to step 1 |
+
+#### Detail Mode (press `o` from navigate mode)
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Advance the task to the next column |
+| `b` | Move the task back to the previous column |
+| `e` | Edit the task title inline |
+| `d` | Delete the task |
+| `Escape` or `q` | Close and return to the board |
+
+#### Summary Mode (press `s` from navigate mode)
+
+| Key | Action |
+|-----|--------|
+| `j` or `Down Arrow` | Scroll down |
+| `k` or `Up Arrow` | Scroll up |
+| `s` | Return to the board |
+| `Escape` | Return to the board |
+
+#### Delete Confirmation (press `d` from navigate mode)
+
+| Key | Action |
+|-----|--------|
+| `y` | Confirm deletion |
+| Any other key | Cancel, task is preserved |
 
 ### Creating Tasks
 
@@ -292,6 +317,77 @@ To Do → In Progress → Done → Archived
 - Press `b` to move it one column back to the left
 - Tasks at the rightmost column (Archived) cannot advance further
 - Tasks at the leftmost column (To Do) cannot move back further
+
+### Deleting Tasks
+
+Press `d` on a selected task to delete it. TATUI will ask for confirmation before removing anything:
+
+```
+Delete "Deploy staging"? y to confirm / any key to cancel
+```
+
+- Press `y` to confirm the deletion
+- Press **any other key** (`n`, `Escape`, or anything else) to cancel — the task is preserved
+- This prevents accidental deletion from a mistyped key
+
+### Task Detail View
+
+Press `o` to open a **detail panel** for the selected task. The board is replaced with a full view of the task's information:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  TASK DETAIL                                                 ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  Project     [CMH] CMH Website                               ║
+║  Title       Deploy to staging                               ║
+║  Description Push latest build to staging environment        ║
+║              for QA team review before production release     ║
+║  Duration    2h                                              ║
+║  Status      ◐ In Progress                                   ║
+║                                                              ║
+║  ──────────────────────────────────────────────────────────  ║
+║                                                              ║
+║  Created     Monday, Feb 10 2026 at 9:15 AM                 ║
+║  Updated     Wednesday, Feb 12 2026 at 3:42 PM              ║
+║  Week        2026-W07                                        ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+ Esc:back  e:edit  Enter:advance  b:back  d:delete
+```
+
+From within the detail view you can:
+- **Advance** or **move back** the task (`Enter` / `b`)
+- **Edit** the task title inline (`e`)
+- **Delete** the task (`d`)
+- **Close** and return to the board (`Escape` or `q`)
+
+### Task Cards
+
+Task cards in the columns show a compact single-line view by default. When you **select** a card (navigate to it), it expands to show the full task description:
+
+**Unselected cards** (compact):
+```
+ [WRK] Deploy staging            2h
+ [WRK] Fix auth bug              1h
+ [PER] Buy groceries
+```
+
+**Selected card** (expanded with description):
+```
+┌────────────────────────────────────────┐
+│ [WRK] Deploy staging              2h  │
+│  Push latest build to staging         │
+│  environment for QA team review       │
+│  before production release            │
+└────────────────────────────────────────┘
+ [WRK] Fix auth bug              1h
+ [PER] Buy groceries
+```
+
+- Only the selected card expands — the rest stay compact to keep the columns clean
+- Tasks without a description show the title line only, even when selected
+- The description text is dimmed to distinguish it from the title
 
 ### Duration Tracking
 
@@ -622,7 +718,8 @@ src/
 │   ├── Header.tsx           # Top bar: week, stats, filter indicator
 │   ├── HelpBar.tsx          # Bottom bar: context-sensitive shortcuts
 │   ├── SummaryView.tsx      # Week summary view grouped by day (press 's')
-│   ├── TaskCard.tsx         # Individual task card with project badge
+│   ├── TaskCard.tsx         # Individual task card with expand-on-select
+│   ├── TaskDetail.tsx       # Full task detail panel (press 'o')
 │   └── TaskInput.tsx        # Two-step task creation form
 ├── db/
 │   ├── index.ts             # Database connection, initialization
