@@ -19,7 +19,7 @@ export function App() {
   const weekId = getWeekId();
   const { tasks, tasksByStatus, addTask, move, remove, refresh } =
     useTasks(weekId);
-  const { projects } = useProjects();
+  const { projects, refresh: refreshProjects } = useProjects();
   const { activeFilter, cycleFilter, filterTasks } = useProjectFilter();
   const { exit } = useApp();
 
@@ -61,12 +61,13 @@ export function App() {
     (input: string) => {
       try {
         addTask(input);
+        refreshProjects();
       } catch (err) {
         showError(err instanceof Error ? err.message : "Failed to create task");
       }
       setMode("navigate");
     },
-    [addTask, showError]
+    [addTask, refreshProjects, showError]
   );
 
   useInput(
