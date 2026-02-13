@@ -69,6 +69,12 @@ function buildTableData(dayTasks: TaskWithProject[]): TableRow[] {
   });
 }
 
+// Map status labels back to colors for cell rendering
+const STATUS_COLOR_BY_LABEL: Record<string, string> = {};
+for (const [, info] of Object.entries(STATUS_LABELS)) {
+  STATUS_COLOR_BY_LABEL[info.label] = info.color;
+}
+
 export function SummaryView({ tasks, weekId }: SummaryViewProps) {
   const byDay = groupByDay(tasks);
   const totalMinutes = tasks.reduce((s, t) => s + (t.durationMinutes ?? 0), 0);
@@ -120,6 +126,18 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
               columns={TABLE_COLUMNS}
               padding={1}
               maxColumnWidths={MAX_COLUMN_WIDTHS}
+              cell={({ children, columnKey }) => {
+                if (columnKey === "Status") {
+                  // Extract the status label from the padded string
+                  const trimmed = String(children).trim();
+                  const color = STATUS_COLOR_BY_LABEL[trimmed] ?? "white";
+                  return <Text color={color}>{children}</Text>;
+                }
+                if (columnKey === "Description" || columnKey === "Time") {
+                  return <Text dimColor>{children}</Text>;
+                }
+                return <Text>{children}</Text>;
+              }}
             />
           </Box>
         );

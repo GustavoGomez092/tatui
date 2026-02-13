@@ -1,5 +1,5 @@
 diff --git a/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js b/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js
-index 1e4803d..d189e4f 100644
+index 1e4803d..e125b2a 100644
 --- a/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js
 +++ b/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js
 @@ -46,8 +46,8 @@ export const useTextInputState = ({ defaultValue = '', suggestions, onChange, on
@@ -13,3 +13,18 @@ index 1e4803d..d189e4f 100644
      }, [state.value, suggestions]);
      const moveCursorLeft = useCallback(() => {
          dispatch({
+@@ -73,11 +73,12 @@ export const useTextInputState = ({ defaultValue = '', suggestions, onChange, on
+     const submit = useCallback(() => {
+         if (suggestion) {
+             insert(suggestion);
+-            onSubmit?.(state.value + suggestion);
++            const fullSuggestion = suggestions?.find(s => s.toLowerCase().startsWith(state.value.toLowerCase()));
++            onSubmit?.(fullSuggestion ?? (state.value + suggestion));
+             return;
+         }
+         onSubmit?.(state.value);
+-    }, [state.value, suggestion, insert, onSubmit]);
++    }, [state.value, suggestion, suggestions, insert, onSubmit]);
+     useEffect(() => {
+         if (state.value !== state.previousValue) {
+             onChange?.(state.value);
