@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "shells": [
+    {
+      "tmuxName": "sidecar-sh-TATUI-1",
+      "displayName": "Tasker",
+      "createdAt": "2026-02-12T19:32:35.253383-08:00",
+      "agentType": "claude",
+      "skipPerms": true
+    },
+    {
+      "tmuxName": "sidecar-sh-TATUI-2",
+      "displayName": "Doer",
+      "createdAt": "2026-02-12T19:36:24.791438-08:00",
+      "agentType": "claude",
+      "skipPerms": true
+    },
+    {
+      "tmuxName": "sidecar-sh-TATUI-3",
+      "displayName": "Reviewer",
+      "createdAt": "2026-02-12T19:37:58.873313-08:00",
+      "agentType": "claude",
+      "skipPerms": true
+    }
+  ]
+}
