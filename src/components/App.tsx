@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
+import { ThemeProvider, defaultTheme, extendTheme } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
@@ -12,6 +13,21 @@ import { useProjects } from "../hooks/useProjects.js";
 import { useProjectFilter } from "../hooks/useProjectFilter.js";
 import { getWeekId } from "../utils/week.js";
 import { rolloverTasks } from "../db/weeks.js";
+
+const tatuiTheme = extendTheme(defaultTheme, {
+  components: {
+    TextInput: {
+      styles: {
+        value: () => ({ color: "white" }),
+      },
+    },
+    Select: {
+      styles: {
+        focusIndicator: () => ({ color: "cyan" }),
+      },
+    },
+  },
+});
 
 type AppMode = "navigate" | "input" | "summary" | "detail" | "confirm-delete";
 
@@ -243,6 +259,7 @@ export function App() {
   );
 
   return (
+    <ThemeProvider theme={tatuiTheme}>
     <Box flexDirection="column" width="100%">
       <Header weekId={weekId} tasks={tasks} activeFilter={activeFilter ?? undefined} />
 
@@ -292,5 +309,6 @@ export function App() {
 
       <HelpBar mode={mode} />
     </Box>
+    </ThemeProvider>
   );
 }
