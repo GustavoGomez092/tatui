@@ -14,7 +14,8 @@
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "patch-package"
   },
   "keywords": [
     "kanban",
@@ -25,6 +26,7 @@
   "license": "MIT",
   "files": [
     "dist",
+    "patches",
     "README.md"
   ],
   "dependencies": {
@@ -41,6 +43,7 @@
     "@types/node": "^25.2.3",
     "@types/react": "^19.2.14",
     "drizzle-kit": "^0.31.9",
+    "patch-package": "^8.0.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

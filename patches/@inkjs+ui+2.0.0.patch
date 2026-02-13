@@ -1,0 +1,15 @@
+diff --git a/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js b/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js
+index 1e4803d..d189e4f 100644
+--- a/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js
++++ b/node_modules/@inkjs/ui/build/components/text-input/use-text-input-state.js
+@@ -46,8 +46,8 @@ export const useTextInputState = ({ defaultValue = '', suggestions, onChange, on
+             return;
+         }
+         return suggestions
+-            ?.find(suggestion => suggestion.startsWith(state.value))
+-            ?.replace(state.value, '');
++            ?.find(suggestion => suggestion.toLowerCase().startsWith(state.value.toLowerCase()))
++            ?.slice(state.value.length);
+     }, [state.value, suggestions]);
+     const moveCursorLeft = useCallback(() => {
+         dispatch({

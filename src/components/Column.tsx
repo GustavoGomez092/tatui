@@ -49,11 +49,12 @@ export function Column({
         </Text>
       ) : (
         tasks.map((task, index) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            isSelected={isActive && index === selectedIndex}
-          />
+          <Box key={task.id} marginBottom={index < tasks.length - 1 ? 1 : 0}>
+            <TaskCard
+              task={task}
+              isSelected={isActive && index === selectedIndex}
+            />
+          </Box>
         ))
       )}
     </Box>
