@@ -14,6 +14,7 @@ import { parseShorthand, isShorthand } from "../utils/parser.js";
 export interface TaskWithProject extends Task {
   projectName: string;
   projectColor: string;
+  warnings?: string[];
 }
 
 export function getTasksByWeek(
@@ -131,7 +132,7 @@ export function createTask(
       .returning()
       .get();
 
-    return { ...result, projectName: project.name, projectColor: project.color };
+    return { ...result, projectName: project.name, projectColor: project.color, warnings: parsed.warnings };
   }
 
   const { project: projectName, ...taskData } = input;

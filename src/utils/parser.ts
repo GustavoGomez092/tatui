@@ -3,6 +3,7 @@ export interface ParsedTask {
   title: string;
   description?: string;
   durationMinutes?: number;
+  warnings?: string[];
 }
 
 const DURATION_RE = /^(\d+(?:\.\d+)?)(m|h|d)$/i;
@@ -47,6 +48,9 @@ export function parseShorthand(input: string): ParsedTask | null {
     const dur = parseDuration(segments[2]);
     if (dur !== undefined && segments.length === 3) {
       result.durationMinutes = dur;
+    } else if (dur === undefined && segments.length === 3 && /^\d/.test(segments[2])) {
+      // Looks like a failed duration attempt (starts with digit)
+      result.warnings = [`Invalid duration '${segments[2]}' — use formats like 15m, 1h, 1.5h, 2h, 1d`];
     } else {
       result.description = segments[2];
     }
@@ -56,6 +60,9 @@ export function parseShorthand(input: string): ParsedTask | null {
     const dur = parseDuration(segments[3]);
     if (dur !== undefined) {
       result.durationMinutes = dur;
+    } else {
+      result.warnings = result.warnings ?? [];
+      result.warnings.push(`Invalid duration '${segments[3]}' — use formats like 15m, 1h, 1.5h, 2h, 1d`);
     }
   }
 

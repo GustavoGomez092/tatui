@@ -108,8 +108,11 @@ export function App() {
   const handleNewTask = useCallback(
     (input: string) => {
       try {
-        addTask(input);
+        const result = addTask(input);
         refreshProjects();
+        if (result?.warnings?.length) {
+          showError(result.warnings[0]!);
+        }
       } catch (err) {
         showError(err instanceof Error ? err.message : "Failed to create task");
       }
