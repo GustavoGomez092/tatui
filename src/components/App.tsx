@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { Box, Text, useInput, useApp, useStdout } from "ink";
+import { Box, Text, useInput, useApp } from "ink";
 import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput, StatusMessage, Spinner } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
 import { TaskInput } from "./TaskInput.js";
-import { SummaryView } from "./SummaryView.js";
+import { SummaryView, getActiveDayCount } from "./SummaryView.js";
 import { TaskDetail } from "./TaskDetail.js";
 import { type TaskWithProject } from "../db/tasks.js";
 import { useTasks } from "../hooks/useTasks.js";
@@ -48,29 +48,11 @@ export function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [scrollOffset, setScrollOffset] = useState(0);
+  const [firstVisibleDay, setFirstVisibleDay] = useState(0);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { stdout } = useStdout();
 
-  // Viewport height for summary scroll (subtract header ~3, helpbar ~1, messages ~2)
-  const viewportHeight = Math.max(5, (stdout?.rows ?? 24) - 6);
-
-  // Estimate total content lines for summary scroll max
-  const summaryMaxScroll = useMemo(() => {
-    const byDay = new Map<number, number>();
-    for (const task of tasks) {
-      const d = new Date(task.createdAt);
-      const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
-      byDay.set(day, (byDay.get(day) ?? 0) + 1);
-    }
-    // header(2) + per day: header(1) + table(3 + 2*count) + margin(1)
-    let total = 2;
-    for (const count of byDay.values()) {
-      total += 5 + 2 * count;
-    }
-    return Math.max(0, total - viewportHeight);
-  }, [tasks, viewportHeight]);
+  const summaryDayCount = useMemo(() => getActiveDayCount(tasks), [tasks]);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -138,7 +120,7 @@ export function App() {
 
       // Summary view toggle
       if (input === "s") {
-        setScrollOffset(0);
+        setFirstVisibleDay(0);
         setMode("summary");
         return;
       }
@@ -265,14 +247,14 @@ export function App() {
         copyToClipboard();
         return;
       }
-      // Scroll down
+      // Scroll down (next day group)
       if (input === "j" || key.downArrow) {
-        setScrollOffset((prev) => Math.min(prev + 1, summaryMaxScroll));
+        setFirstVisibleDay((prev) => Math.min(prev + 1, Math.max(0, summaryDayCount - 1)));
         return;
       }
-      // Scroll up
+      // Scroll up (previous day group)
       if (input === "k" || key.upArrow) {
-        setScrollOffset((prev) => Math.max(prev - 1, 0));
+        setFirstVisibleDay((prev) => Math.max(prev - 1, 0));
         return;
       }
       if (input === "s" || input === "q" || key.escape) {
@@ -336,7 +318,7 @@ export function App() {
           isActive={mode === "detail"}
         />
       ) : mode === "summary" ? (
-        <SummaryView tasks={tasks} weekId={weekId} scrollOffset={scrollOffset} viewportHeight={viewportHeight} />
+        <SummaryView tasks={tasks} weekId={weekId} firstVisibleDay={firstVisibleDay} />
       ) : (
         <Board
           tasksByStatus={filteredTasks}
