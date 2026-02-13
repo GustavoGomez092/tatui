@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { Badge } from "@inkjs/ui";
 import { type TaskWithProject } from "../db/tasks.js";
 import { type TaskStatus } from "../db/schema.js";
 import { formatDuration } from "../utils/week.js";
@@ -137,7 +138,7 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
                   </Box>
                   <Text> </Text>
                   <Box width={COL_STATUS}>
-                    <Text color={statusInfo.color}>{status}</Text>
+                    <Badge color={statusInfo.color}>{status}</Badge>
                   </Box>
                 </Box>
               );

@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { Badge } from "@inkjs/ui";
 import { type TaskWithProject } from "../db/tasks.js";
 import { formatDuration } from "../utils/week.js";
 
@@ -18,9 +19,9 @@ export function TaskCard({ task, isSelected }: TaskCardProps) {
     >
       {/* Title row */}
       <Box flexDirection="row">
-        <Text color={task.projectColor} bold>
-          [{task.projectName.slice(0, 3).toUpperCase()}]
-        </Text>
+        <Badge color={task.projectColor}>
+          {task.projectName.slice(0, 3).toUpperCase()}
+        </Badge>
         <Text> </Text>
         <Text wrap="truncate">{task.title}</Text>
         {task.durationMinutes ? (

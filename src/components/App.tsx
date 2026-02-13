@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
-import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput } from "@inkjs/ui";
+import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
@@ -296,10 +296,7 @@ export function App() {
       ) : null}
 
       {errorMsg ? (
-        <Box paddingX={1}>
-          <Text color="red" bold>Error: </Text>
-          <Text color="red">{errorMsg}</Text>
-        </Box>
+        <StatusMessage variant="error">{errorMsg}</StatusMessage>
       ) : null}
 
       <HelpBar mode={mode} />

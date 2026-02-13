@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
-import { TextInput } from "@inkjs/ui";
+import { TextInput, StatusMessage, Badge } from "@inkjs/ui";
 import { type TaskWithProject } from "../db/tasks.js";
 import { formatDuration } from "../utils/week.js";
 import { parseDuration } from "../utils/parser.js";
@@ -218,7 +218,7 @@ export function TaskDetail({
         </Box>
         {isEditing && errorMsg ? (
           <Box paddingLeft={4}>
-            <Text color="red">{errorMsg}</Text>
+            <StatusMessage variant="warning">{errorMsg}</StatusMessage>
           </Box>
         ) : null}
       </Box>
@@ -238,7 +238,7 @@ export function TaskDetail({
       <Box gap={3} marginBottom={1}>
         <Box>
           <Text dimColor>Status: </Text>
-          <Text color={status.color}>{status.label}</Text>
+          <Badge color={status.color}>{status.label}</Badge>
         </Box>
         <Box>
           <Text dimColor>Created: </Text>
