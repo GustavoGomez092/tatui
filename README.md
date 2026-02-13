@@ -55,7 +55,7 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 - **Duration tracking** — forecast time per task, see totals in the header
 - **Vim-style navigation** — `h/j/k/l` keys, `Enter` to advance, `b` to move back
 - **Week summaries** — stats and per-project breakdowns, exportable
-- **Single-command install** — `npm install -g tatui`
+- **Single-command install** — `curl ... | bash` or `npm install -g tatui`
 - **Local-first** — all data in a local SQLite database, never leaves your machine
 - **Zero configuration** — just run `tatui` and start adding tasks
 
@@ -70,28 +70,40 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 
 ## Installation
 
-**Global install (recommended):**
+**One-command install (recommended):**
 
 ```bash
-npm install -g tatui
+curl -fsSL https://raw.githubusercontent.com/GustavoGomez092/tatui/main/install.sh | bash
 ```
 
-Then run from anywhere:
+This clones the repo, installs dependencies, builds, and links the `tatui` command to your PATH. Then run from anywhere:
 
 ```bash
 tatui
 ```
 
-**Run without installing:**
+**Update to latest:**
 
 ```bash
-npx tatui
+curl -fsSL https://raw.githubusercontent.com/GustavoGomez092/tatui/main/install.sh | bash -s -- --update
+```
+
+**Uninstall:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GustavoGomez092/tatui/main/uninstall.sh | bash
+```
+
+**Alternative — npm global install:**
+
+```bash
+npm install -g tatui
 ```
 
 **From source:**
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/GustavoGomez092/tatui.git
 cd tatui
 npm install
 npm run build
