@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { Alert, Badge } from "@inkjs/ui";
+import { Alert } from "@inkjs/ui";
+import { Table } from "./Table.js";
 import { type TaskWithProject } from "../db/tasks.js";
 import { type TaskStatus } from "../db/schema.js";
 import { formatDuration } from "../utils/week.js";
@@ -19,18 +20,6 @@ const STATUS_LABELS: Record<TaskStatus, { label: string; color: string }> = {
   archived: { label: "ARCHVD", color: "gray" },
 };
 
-// Column widths
-const COL_PROJECT = 12;
-const COL_TITLE = 22;
-const COL_DESC = 30;
-const COL_TIME = 7;
-const COL_STATUS = 8;
-
-function truncate(str: string, max: number): string {
-  if (str.length <= max) return str.padEnd(max);
-  return str.slice(0, max - 2) + "..";
-}
-
 function getDayOfWeek(dateStr: string): number {
   const d = new Date(dateStr);
   const day = d.getDay();
@@ -48,7 +37,37 @@ function groupByDay(tasks: TaskWithProject[]): Map<number, TaskWithProject[]> {
   return groups;
 }
 
-const SEPARATOR_WIDTH = COL_PROJECT + COL_TITLE + COL_DESC + COL_TIME + COL_STATUS + 4;
+type TableRow = {
+  [key: string]: string;
+  Project: string;
+  Title: string;
+  Description: string;
+  Time: string;
+  Status: string;
+};
+
+const TABLE_COLUMNS: (keyof TableRow)[] = ["Project", "Title", "Description", "Time", "Status"];
+
+const MAX_COLUMN_WIDTHS: Partial<Record<keyof TableRow, number>> = {
+  Project: 12,
+  Title: 20,
+  Description: 40,
+  Time: 6,
+  Status: 8,
+};
+
+function buildTableData(dayTasks: TaskWithProject[]): TableRow[] {
+  return dayTasks.map((task) => {
+    const statusInfo = STATUS_LABELS[task.status];
+    return {
+      Project: task.projectName,
+      Title: task.title,
+      Description: task.description || "—",
+      Time: task.durationMinutes ? formatDuration(task.durationMinutes) : "—",
+      Status: statusInfo.label,
+    };
+  });
+}
 
 export function SummaryView({ tasks, weekId }: SummaryViewProps) {
   const byDay = groupByDay(tasks);
@@ -77,28 +96,13 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
         </Text>
       </Box>
 
-      {/* Table header */}
-      <Box>
-        <Box width={COL_PROJECT}><Text bold dimColor>Project</Text></Box>
-        <Text> </Text>
-        <Box width={COL_TITLE}><Text bold dimColor>Title</Text></Box>
-        <Text> </Text>
-        <Box width={COL_DESC}><Text bold dimColor>Description</Text></Box>
-        <Text> </Text>
-        <Box width={COL_TIME}><Text bold dimColor>Time</Text></Box>
-        <Text> </Text>
-        <Box width={COL_STATUS}><Text bold dimColor>Status</Text></Box>
-      </Box>
-      <Box>
-        <Text dimColor>{"─".repeat(SEPARATOR_WIDTH)}</Text>
-      </Box>
-
       {/* Days */}
       {DAY_NAMES.map((dayName, dayIdx) => {
         const dayTasks = byDay.get(dayIdx);
         if (!dayTasks || dayTasks.length === 0) return null;
 
         const dayMinutes = dayTasks.reduce((s, t) => s + (t.durationMinutes ?? 0), 0);
+        const tableData = buildTableData(dayTasks);
 
         return (
           <Box key={dayIdx} flexDirection="column" marginBottom={1}>
@@ -110,39 +114,13 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
               ) : null}
             </Box>
 
-            {/* Task rows — all values pre-truncated to fixed widths */}
-            {dayTasks.map((task) => {
-              const statusInfo = STATUS_LABELS[task.status];
-              const project = truncate(task.projectName, COL_PROJECT);
-              const title = truncate(task.title, COL_TITLE);
-              const desc = truncate(task.description || "—", COL_DESC);
-              const time = (task.durationMinutes ? formatDuration(task.durationMinutes) : "—").padEnd(COL_TIME);
-              const status = truncate(statusInfo.label, COL_STATUS);
-
-              return (
-                <Box key={task.id}>
-                  <Box width={COL_PROJECT}>
-                    <Text color={task.projectColor}>{project}</Text>
-                  </Box>
-                  <Text> </Text>
-                  <Box width={COL_TITLE}>
-                    <Text>{title}</Text>
-                  </Box>
-                  <Text> </Text>
-                  <Box width={COL_DESC}>
-                    <Text dimColor>{desc}</Text>
-                  </Box>
-                  <Text> </Text>
-                  <Box width={COL_TIME}>
-                    <Text dimColor>{time}</Text>
-                  </Box>
-                  <Text> </Text>
-                  <Box width={COL_STATUS}>
-                    <Badge color={statusInfo.color}>{status}</Badge>
-                  </Box>
-                </Box>
-              );
-            })}
+            {/* Task table */}
+            <Table
+              data={tableData}
+              columns={TABLE_COLUMNS}
+              padding={1}
+              maxColumnWidths={MAX_COLUMN_WIDTHS}
+            />
           </Box>
         );
       })}
