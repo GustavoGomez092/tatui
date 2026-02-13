@@ -4,13 +4,14 @@ import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
 import { TaskInput } from "./TaskInput.js";
+import { SummaryView } from "./SummaryView.js";
 import { useTasks } from "../hooks/useTasks.js";
 import { useProjects } from "../hooks/useProjects.js";
 import { useProjectFilter } from "../hooks/useProjectFilter.js";
 import { getWeekId } from "../utils/week.js";
 import { rolloverTasks } from "../db/weeks.js";
 
-type AppMode = "navigate" | "input";
+type AppMode = "navigate" | "input" | "summary";
 
 export function App() {
   const weekId = getWeekId();
@@ -64,6 +65,12 @@ export function App() {
       // New task
       if (input === "n") {
         setMode("input");
+        return;
+      }
+
+      // Summary view toggle
+      if (input === "s") {
+        setMode("summary");
         return;
       }
 
@@ -145,15 +152,32 @@ export function App() {
     { isActive: mode === "navigate" }
   );
 
+  useInput(
+    (input, key) => {
+      if (input === "s" || input === "q" || key.escape) {
+        if (input === "q") {
+          exit();
+          return;
+        }
+        setMode("navigate");
+      }
+    },
+    { isActive: mode === "summary" }
+  );
+
   return (
     <Box flexDirection="column" width="100%">
       <Header weekId={weekId} tasks={tasks} activeFilter={activeFilter ?? undefined} />
 
-      <Board
-        tasksByStatus={filteredTasks}
-        activeColumn={activeColumn}
-        selectedRow={selectedRow}
-      />
+      {mode === "summary" ? (
+        <SummaryView tasks={tasks} weekId={weekId} />
+      ) : (
+        <Board
+          tasksByStatus={filteredTasks}
+          activeColumn={activeColumn}
+          selectedRow={selectedRow}
+        />
+      )}
 
       {mode === "input" ? (
         <TaskInput

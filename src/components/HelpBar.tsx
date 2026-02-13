@@ -6,8 +6,9 @@ interface HelpBarProps {
 }
 
 const HELP: Record<string, string> = {
-  navigate: "h/l:columns  j/k:rows  Enter:advance  b:back  n:new  p:filter  d:delete  r:refresh  q:quit",
+  navigate: "h/l:columns  j/k:rows  Enter:advance  b:back  n:new  p:filter  s:summary  d:delete  r:refresh  q:quit",
   input: "Enter:create  Tab:autocomplete  Esc:cancel",
+  summary: "s/Esc:back to board  q:quit",
 };
 
 export function HelpBar({ mode }: HelpBarProps) {

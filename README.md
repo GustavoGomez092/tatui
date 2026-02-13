@@ -13,7 +13,7 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 │ [PER] Taxes  ││ [WRK] Tests  ││ [WRK] Deploy ││              │
 │ [WRK] Docs   ││              ││              ││              │
 └──────────────┘└──────────────┘└──────────────┘└──────────────┘
- h/l:columns  j/k:rows  Enter:advance  b:back  n:new  p:filter  q:quit
+ h/l:columns  j/k:rows  Enter:advance  b:back  n:new  p:filter  s:summary  q:quit
 ```
 
 ---
@@ -33,6 +33,7 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
   - [Project Filtering](#project-filtering)
   - [Moving Tasks](#moving-tasks)
   - [Duration Tracking](#duration-tracking)
+  - [Week Summary View](#week-summary-view)
 - [Weekly Cycle](#weekly-cycle)
   - [Fresh Board Every Monday](#fresh-board-every-monday)
   - [Automatic Rollover](#automatic-rollover)
@@ -54,7 +55,8 @@ Built with React Ink, SQLite, and TypeScript. Runs entirely in your terminal, st
 - **Autocomplete** — Tab-to-accept project names with ghost text
 - **Duration tracking** — forecast time per task, see totals in the header
 - **Vim-style navigation** — `h/j/k/l` keys, `Enter` to advance, `b` to move back
-- **Week summaries** — stats and per-project breakdowns, exportable
+- **Week summary view** — press `s` for a daily breakdown with project, title, description, time, and status per task — designed for copy/paste into billing and time-tracking systems
+- **Week summaries** — stats and per-project breakdowns, exportable via CLI
 - **Single-command install** — `curl ... | bash` or `npm install -g tatui`
 - **Local-first** — all data in a local SQLite database, never leaves your machine
 - **Zero configuration** — just run `tatui` and start adding tasks
@@ -169,6 +171,7 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 | `n` | Create a new task (opens input form) |
 | `d` | Delete the selected task |
 | `p` | Cycle through project filters |
+| `s` | Toggle the week summary view |
 | `r` | Refresh tasks from the database |
 | `q` | Quit TATUI |
 
@@ -183,6 +186,15 @@ The **help bar** at the bottom shows available keyboard shortcuts for the curren
 | `Backspace` | Delete the last character |
 | `Enter` | Submit shorthand directly, or advance to project selection |
 | `Escape` | Cancel and return to the board |
+
+#### Summary Mode (press `s` from navigate mode)
+
+| Key | Action |
+|-----|--------|
+| `j` or `Down Arrow` | Scroll down |
+| `k` or `Up Arrow` | Scroll up |
+| `s` | Return to the board |
+| `Escape` | Return to the board |
 
 **Step 2 — Project selection (plain titles only):**
 
@@ -290,6 +302,87 @@ Tasks can have optional time forecasts:
 - The **header** shows aggregated durations: `completed-time / total-time`
   - Completed time = sum of durations for "Done" tasks
   - Total time = sum of durations for all tasks (excluding "Archived")
+
+### Week Summary View
+
+Press `s` to toggle the **week summary view** — a daily breakdown of all tasks for the current week. This view is designed for quick scanning and copy/pasting into company time-tracking or billing systems.
+
+```
+WEEK SUMMARY — 2026-W07                    Tasks: 8/12 · Time: 6h 30m/10h
+
+MONDAY
+───────────────────────────────────────────────────────────────────────────
+[WORK]  Deploy staging      Push latest build           1h      ● Done
+[WORK]  Fix auth bug        Token refresh broken        2h      ◐ Active
+[PERS]  Call dentist        Schedule cleaning           30m     ● Done
+
+TUESDAY
+───────────────────────────────────────────────────────────────────────────
+[WORK]  Code review         PR #42 feedback             30m     ● Done
+[WORK]  API refactor        REST to GraphQL             4h      ◐ Active
+[SIDE]  Blog post           React Ink tutorial          1.5h    ○ To Do
+
+WEDNESDAY
+───────────────────────────────────────────────────────────────────────────
+[PERS]  Pay bills           Utilities + rent            30m     ○ To Do
+[WORK]  Write tests         Unit tests auth module      2h      ● Done
+
+THURSDAY
+───────────────────────────────────────────────────────────────────────────
+[SIDE]  Setup CI            GitHub Actions config       30m     ○ To Do
+
+FRIDAY
+───────────────────────────────────────────────────────────────────────────
+[WORK]  Update docs         API docs outdated           1h      ◐ Active
+[WORK]  Initial setup       Project scaffolding         —       ◌ Arch.
+
+───────────────────────────────────────────────────────────────────────────
+BY PROJECT
+work:       6/8 tasks    8h 30m
+personal:   2/3 tasks    1h 30m
+side:       0/1 tasks    1h 30m
+
+ s:board  j/k:scroll  Esc:board
+```
+
+#### Layout
+
+Tasks are **grouped by day of the week** (Monday through Sunday), based on the day they were created. Only days with tasks are shown — empty days are skipped.
+
+Each task row has 5 columns:
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| **Project** | First 3 letters, uppercased, colored | `[WORK]` |
+| **Title** | Task name, truncated if long | `Deploy staging` |
+| **Description** | Task description, dimmed. `—` if empty | `Push latest build` |
+| **Duration** | Forecasted time. `—` if not set | `1h` |
+| **Status** | Board status with icon, colored | `● Done` |
+
+Status indicators match the board columns:
+
+| Icon | Label | Color |
+|------|-------|-------|
+| `○` | To Do | Blue |
+| `◐` | Active | Yellow |
+| `●` | Done | Green |
+| `◌` | Arch. | Gray |
+
+#### Per-project subtotals
+
+At the bottom of the summary, a **BY PROJECT** section shows totals per project:
+- Completed tasks out of total
+- Total forecasted duration
+
+This matches how most billing systems expect hours to be grouped — by client or project.
+
+#### Scrolling
+
+The summary view supports scrolling for weeks with many tasks:
+- `j` or `Down Arrow` to scroll down
+- `k` or `Up Arrow` to scroll up
+
+Press `s` or `Escape` to return to the board.
 
 ---
 
@@ -528,6 +621,7 @@ src/
 │   ├── Column.tsx           # Single column with header and task list
 │   ├── Header.tsx           # Top bar: week, stats, filter indicator
 │   ├── HelpBar.tsx          # Bottom bar: context-sensitive shortcuts
+│   ├── SummaryView.tsx      # Week summary view grouped by day (press 's')
 │   ├── TaskCard.tsx         # Individual task card with project badge
 │   └── TaskInput.tsx        # Two-step task creation form
 ├── db/
