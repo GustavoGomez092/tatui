@@ -66,12 +66,13 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
       {/* Table header */}
       <Box>
         <Box width={12}><Text bold dimColor>Project</Text></Box>
-        <Box flexGrow={1}><Text bold dimColor>Title</Text></Box>
+        <Box width={20}><Text bold dimColor>Title</Text></Box>
+        <Box flexGrow={1}><Text bold dimColor>Description</Text></Box>
         <Box width={8}><Text bold dimColor>Time</Text></Box>
         <Box width={14}><Text bold dimColor>Status</Text></Box>
       </Box>
       <Box>
-        <Text dimColor>{"─".repeat(60)}</Text>
+        <Text dimColor>{"─".repeat(80)}</Text>
       </Box>
 
       {/* Days */}
@@ -101,8 +102,13 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
                       {task.projectName.slice(0, 10)}
                     </Text>
                   </Box>
-                  <Box flexGrow={1}>
+                  <Box width={20}>
                     <Text wrap="truncate">{task.title}</Text>
+                  </Box>
+                  <Box flexGrow={1}>
+                    <Text wrap="truncate" dimColor>
+                      {task.description || "—"}
+                    </Text>
                   </Box>
                   <Box width={8}>
                     <Text dimColor>
