@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
-import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput, StatusMessage } from "@inkjs/ui";
+import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput, StatusMessage, Spinner } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
@@ -45,12 +45,14 @@ export function App() {
   const [detailTask, setDetailTask] = useState<TaskWithProject | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskWithProject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
     const rolled = rolloverTasks();
     if (rolled > 0) refresh();
+    setIsLoading(false);
   }, []);
 
   const filteredTasks = filterTasks(tasksByStatus);
@@ -246,7 +248,9 @@ export function App() {
     <Box flexDirection="column" width="100%">
       <Header weekId={weekId} tasks={tasks} activeFilter={activeFilter ?? undefined} />
 
-      {mode === "detail" && detailTask ? (
+      {isLoading ? (
+        <Spinner label="Loading tasks..." />
+      ) : mode === "detail" && detailTask ? (
         <TaskDetail
           task={detailTask}
           projectNames={projectNames}

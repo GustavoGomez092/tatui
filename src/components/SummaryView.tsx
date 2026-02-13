@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { Badge } from "@inkjs/ui";
+import { Alert, Badge } from "@inkjs/ui";
 import { type TaskWithProject } from "../db/tasks.js";
 import { type TaskStatus } from "../db/schema.js";
 import { formatDuration } from "../utils/week.js";
@@ -148,7 +148,9 @@ export function SummaryView({ tasks, weekId }: SummaryViewProps) {
       })}
 
       {tasks.length === 0 ? (
-        <Text dimColor italic>No tasks this week. Press 's' to go back, 'n' to add tasks.</Text>
+        <Alert variant="info" title="No tasks this week">
+          Press Esc to go back to the board, or 'n' to add your first task.
+        </Alert>
       ) : null}
     </Box>
   );
