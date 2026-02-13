@@ -11,8 +11,9 @@ import { type TaskWithProject } from "../db/tasks.js";
 import { useTasks } from "../hooks/useTasks.js";
 import { useProjects } from "../hooks/useProjects.js";
 import { useProjectFilter } from "../hooks/useProjectFilter.js";
-import { getWeekId } from "../utils/week.js";
+import { getWeekId, formatDuration } from "../utils/week.js";
 import { rolloverTasks } from "../db/weeks.js";
+import clipboard from "clipboardy";
 
 const tatuiTheme = extendTheme(defaultTheme, {
   components: {
@@ -45,8 +46,10 @@ export function App() {
   const [detailTask, setDetailTask] = useState<TaskWithProject | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskWithProject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -68,6 +71,12 @@ export function App() {
     },
     [filteredTasks, selectedRow]
   );
+
+  const showSuccess = useCallback((msg: string) => {
+    if (successTimer.current) clearTimeout(successTimer.current);
+    setSuccessMsg(msg);
+    successTimer.current = setTimeout(() => setSuccessMsg(null), 2000);
+  }, []);
 
   const showError = useCallback((msg: string) => {
     if (errorTimer.current) clearTimeout(errorTimer.current);
@@ -197,8 +206,40 @@ export function App() {
     { isActive: mode === "navigate" }
   );
 
+  const copyToClipboard = useCallback(() => {
+    const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const statusLabels: Record<string, string> = {
+      todo: "TODO", "in-progress": "IN PROGRESS", done: "DONE", archived: "ARCHIVED",
+    };
+    const getDayOfWeek = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const day = d.getDay();
+      return day === 0 ? 6 : day - 1;
+    };
+
+    const header = "Day\tProject\tTitle\tDescription\tTime\tStatus";
+    const rows = tasks.map((task) => {
+      const day = dayNames[getDayOfWeek(task.createdAt)] ?? "";
+      const time = task.durationMinutes ? formatDuration(task.durationMinutes) : "";
+      const status = statusLabels[task.status] ?? task.status;
+      const desc = task.description ?? "";
+      return `${day}\t${task.projectName}\t${task.title}\t${desc}\t${time}\t${status}`;
+    });
+    const tsv = [header, ...rows].join("\n");
+
+    clipboard.write(tsv).then(() => {
+      showSuccess("Copied to clipboard!");
+    }).catch(() => {
+      showError("Failed to copy to clipboard");
+    });
+  }, [tasks, showSuccess, showError]);
+
   useInput(
     (input, key) => {
+      if (input === "c") {
+        copyToClipboard();
+        return;
+      }
       if (input === "s" || input === "q" || key.escape) {
         if (input === "q") {
           exit();
@@ -301,6 +342,10 @@ export function App() {
 
       {errorMsg ? (
         <StatusMessage variant="error">{errorMsg}</StatusMessage>
+      ) : null}
+
+      {successMsg ? (
+        <StatusMessage variant="success">{successMsg}</StatusMessage>
       ) : null}
 
       <HelpBar mode={mode} />
