@@ -10,7 +10,7 @@ const HELP: Record<string, string> = {
   input: "Enter:create  Tab:autocomplete  Esc:cancel",
   summary: "s/Esc:back to board  q:quit",
   detail: "j/k:select field  Enter/e:edit  Esc:back to board  q:quit",
-  "confirm-delete": "y:confirm delete  n/Esc:cancel",
+  "confirm-delete": "Y:confirm delete  N:cancel",
 };
 
 export function HelpBar({ mode }: HelpBarProps) {

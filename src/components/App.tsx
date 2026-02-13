@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
-import { ThemeProvider, defaultTheme, extendTheme } from "@inkjs/ui";
+import { ThemeProvider, defaultTheme, extendTheme, ConfirmInput } from "@inkjs/ui";
 import { Board, COLUMNS } from "./Board.js";
 import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
@@ -241,23 +241,6 @@ export function App() {
     [changeProject, refreshProjects]
   );
 
-  useInput(
-    (input, key) => {
-      if (input === "y" && deleteTarget) {
-        remove(deleteTarget.id);
-        setSelectedRow(Math.max(0, selectedRow - 1));
-        setDeleteTarget(null);
-        setMode("navigate");
-        return;
-      }
-      if (input === "n" || key.escape) {
-        setDeleteTarget(null);
-        setMode("navigate");
-      }
-    },
-    { isActive: mode === "confirm-delete" }
-  );
-
   return (
     <ThemeProvider theme={tatuiTheme}>
     <Box flexDirection="column" width="100%">
@@ -296,7 +279,19 @@ export function App() {
           <Text color="red" bold>Delete </Text>
           <Text bold>"{deleteTarget.title}"</Text>
           <Text color="red" bold>? </Text>
-          <Text dimColor>(y/n)</Text>
+          <ConfirmInput
+            defaultChoice="cancel"
+            onConfirm={() => {
+              remove(deleteTarget.id);
+              setSelectedRow(Math.max(0, selectedRow - 1));
+              setDeleteTarget(null);
+              setMode("navigate");
+            }}
+            onCancel={() => {
+              setDeleteTarget(null);
+              setMode("navigate");
+            }}
+          />
         </Box>
       ) : null}
 
