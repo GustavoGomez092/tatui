@@ -23,7 +23,7 @@ export function AutocompleteInput({
     if (!value) return { match: null, ghostText: "" };
     const lower = value.toLowerCase();
     const found = suggestions.find((s) => s.toLowerCase().startsWith(lower));
-    if (found && found.toLowerCase() !== lower) {
+    if (found && found.length > value.length) {
       return { match: found, ghostText: found.slice(value.length) };
     }
     return { match: null, ghostText: "" };

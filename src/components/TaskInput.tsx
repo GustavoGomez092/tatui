@@ -23,6 +23,11 @@ export function TaskInput({
   const [pendingTitle, setPendingTitle] = useState("");
   const [selectedProjectIdx, setSelectedProjectIdx] = useState(0);
 
+  const shorthandSuggestions = useMemo(
+    () => projectNames.map((p) => p + "::"),
+    [projectNames]
+  );
+
   const handleTitleSubmit = useCallback(
     (val: string) => {
       const trimmed = val.trim();
@@ -152,7 +157,7 @@ export function TaskInput({
           value={value}
           onChange={setValue}
           onSubmit={handleTitleSubmit}
-          suggestions={projectNames.map((p) => p + "::")}
+          suggestions={shorthandSuggestions}
           placeholder="project::title::desc::duration or task title"
           isActive={isActive}
         />

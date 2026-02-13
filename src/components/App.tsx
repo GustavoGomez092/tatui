@@ -5,13 +5,15 @@ import { Header } from "./Header.js";
 import { HelpBar } from "./HelpBar.js";
 import { TaskInput } from "./TaskInput.js";
 import { SummaryView } from "./SummaryView.js";
+import { TaskDetail } from "./TaskDetail.js";
+import { type TaskWithProject } from "../db/tasks.js";
 import { useTasks } from "../hooks/useTasks.js";
 import { useProjects } from "../hooks/useProjects.js";
 import { useProjectFilter } from "../hooks/useProjectFilter.js";
 import { getWeekId } from "../utils/week.js";
 import { rolloverTasks } from "../db/weeks.js";
 
-type AppMode = "navigate" | "input" | "summary";
+type AppMode = "navigate" | "input" | "summary" | "detail";
 
 export function App() {
   const weekId = getWeekId();
@@ -24,6 +26,7 @@ export function App() {
   const [activeColumn, setActiveColumn] = useState(0);
   const [selectedRow, setSelectedRow] = useState(0);
   const [mode, setMode] = useState<AppMode>("navigate");
+  const [detailTask, setDetailTask] = useState<TaskWithProject | null>(null);
 
   // Auto-rollover unfinished tasks from previous weeks
   useEffect(() => {
@@ -105,6 +108,16 @@ export function App() {
         return;
       }
 
+      // Open task detail
+      if (input === "o" && currentTasks.length > 0) {
+        const task = currentTasks[selectedRow];
+        if (task) {
+          setDetailTask(task);
+          setMode("detail");
+        }
+        return;
+      }
+
       // Advance task
       if (key.return && currentTasks.length > 0) {
         const task = currentTasks[selectedRow];
@@ -165,11 +178,27 @@ export function App() {
     { isActive: mode === "summary" }
   );
 
+  useInput(
+    (input, key) => {
+      if (key.escape || key.return || input === "o" || input === "q") {
+        if (input === "q") {
+          exit();
+          return;
+        }
+        setDetailTask(null);
+        setMode("navigate");
+      }
+    },
+    { isActive: mode === "detail" }
+  );
+
   return (
     <Box flexDirection="column" width="100%">
       <Header weekId={weekId} tasks={tasks} activeFilter={activeFilter ?? undefined} />
 
-      {mode === "summary" ? (
+      {mode === "detail" && detailTask ? (
+        <TaskDetail task={detailTask} />
+      ) : mode === "summary" ? (
         <SummaryView tasks={tasks} weekId={weekId} />
       ) : (
         <Board
