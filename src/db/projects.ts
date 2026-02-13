@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDb } from "./index.js";
 import { projects, type Project, type NewProject } from "./schema.js";
 
@@ -31,7 +31,11 @@ export function getProjectById(id: number): Project | undefined {
 
 export function getProjectByName(name: string): Project | undefined {
   const db = getDb();
-  return db.select().from(projects).where(eq(projects.name, name)).get();
+  return db
+    .select()
+    .from(projects)
+    .where(sql`lower(${projects.name}) = lower(${name})`)
+    .get();
 }
 
 /**
