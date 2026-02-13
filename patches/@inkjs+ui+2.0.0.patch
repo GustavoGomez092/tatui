@@ -28,3 +28,24 @@ index 1e4803d..e125b2a 100644
      useEffect(() => {
          if (state.value !== state.previousValue) {
              onChange?.(state.value);
+diff --git a/node_modules/@inkjs/ui/build/components/text-input/use-text-input.js b/node_modules/@inkjs/ui/build/components/text-input/use-text-input.js
+index 6247176..5e78ec9 100644
+--- a/node_modules/@inkjs/ui/build/components/text-input/use-text-input.js
++++ b/node_modules/@inkjs/ui/build/components/text-input/use-text-input.js
+@@ -41,10 +41,15 @@ export const useTextInput = ({ isDisabled = false, state, placeholder = '', }) =
+         if (key.upArrow ||
+             key.downArrow ||
+             (key.ctrl && input === 'c') ||
+-            key.tab ||
+             (key.shift && key.tab)) {
+             return;
+         }
++        if (key.tab) {
++            if (state.suggestion) {
++                state.insert(state.suggestion);
++            }
++            return;
++        }
+         if (key.return) {
+             state.submit();
+             return;

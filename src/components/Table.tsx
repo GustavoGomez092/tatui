@@ -37,6 +37,33 @@ interface ColumnInfo {
   width: number;
 }
 
+function wordWrap(text: string, maxWidth: number): string[] {
+  if (!text) return [""];
+  if (text.length <= maxWidth) return [text];
+
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    if (!current) {
+      current = word;
+    } else if (current.length + 1 + word.length <= maxWidth) {
+      current += " " + word;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+    // Force-break words longer than maxWidth
+    while (current.length > maxWidth) {
+      lines.push(current.slice(0, maxWidth));
+      current = current.slice(maxWidth);
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [""];
+}
+
 function getColumns<T extends ScalarDict>(
   data: T[],
   columns: (keyof T)[],
@@ -60,12 +87,9 @@ function getColumns<T extends ScalarDict>(
   });
 }
 
-function padCell(value: string, width: number, padding: number, fillChar = " "): string {
+function padLine(line: string, width: number, padding: number, fillChar = " "): string {
   const contentWidth = width - padding * 2;
-  let display = value;
-  if (display.length > contentWidth) {
-    display = contentWidth > 2 ? display.slice(0, contentWidth - 2) + ".." : display.slice(0, contentWidth);
-  }
+  const display = line.slice(0, contentWidth);
   const leftPad = fillChar.repeat(padding);
   const rightPad = fillChar.repeat(Math.max(0, width - padding - display.length));
   return leftPad + display + rightPad;
@@ -97,31 +121,47 @@ function renderBorderRow(
   );
 }
 
-function renderDataRow(
+function renderMultiLineDataRow(
   cols: ColumnInfo[],
   data: Record<string, Scalar>,
   padding: number,
   Cell: (props: CellProps) => React.ReactElement,
   Skeleton: (props: { children: React.ReactNode }) => React.ReactElement
 ) {
+  // Word-wrap each cell's content
+  const wrappedCells = cols.map((col) => {
+    const raw = data[col.key];
+    const value = raw == null ? "" : String(raw);
+    const contentWidth = col.width - padding * 2;
+    return wordWrap(value, contentWidth);
+  });
+
+  // Find the tallest cell
+  const maxLines = Math.max(...wrappedCells.map((lines) => lines.length), 1);
+
+  // Render one <Box flexDirection="row"> per line
   return (
-    <Box flexDirection="row">
-      <Skeleton>{"│"}</Skeleton>
-      {cols.map((col, idx) => {
-        const raw = data[col.key];
-        const value = raw == null ? "" : String(raw);
-        const padded = padCell(value, col.width, padding);
-        return (
-          <React.Fragment key={col.key}>
-            {idx > 0 ? <Skeleton>{"│"}</Skeleton> : null}
-            <Cell column={idx} columnKey={col.key}>
-              {padded}
-            </Cell>
-          </React.Fragment>
-        );
-      })}
-      <Skeleton>{"│"}</Skeleton>
-    </Box>
+    <>
+      {Array.from({ length: maxLines }, (_, lineIdx) => (
+        <Box flexDirection="row" key={lineIdx}>
+          <Skeleton>{"│"}</Skeleton>
+          {cols.map((col, colIdx) => {
+            const lines = wrappedCells[colIdx]!;
+            const line = lines[lineIdx] ?? "";
+            const padded = padLine(line, col.width, padding);
+            return (
+              <React.Fragment key={col.key}>
+                {colIdx > 0 ? <Skeleton>{"│"}</Skeleton> : null}
+                <Cell column={colIdx} columnKey={col.key}>
+                  {padded}
+                </Cell>
+              </React.Fragment>
+            );
+          })}
+          <Skeleton>{"│"}</Skeleton>
+        </Box>
+      ))}
+    </>
   );
 }
 
@@ -154,7 +194,7 @@ export function Table<T extends ScalarDict>({
   }
 
   // Header cell renderer wraps in HeaderComp
-  const HeadingCell = ({ children, column, columnKey }: CellProps) => (
+  const HeadingCell = ({ children }: CellProps) => (
     <HeaderComp>{children}</HeaderComp>
   );
 
@@ -164,15 +204,15 @@ export function Table<T extends ScalarDict>({
       {renderBorderRow(cols, { line: "─", left: "┌", right: "┐", cross: "┬" }, SkeletonComp)}
 
       {/* Heading: │ Name │ Age  │ */}
-      {renderDataRow(cols, headingData, padding, HeadingCell, SkeletonComp)}
+      {renderMultiLineDataRow(cols, headingData, padding, HeadingCell, SkeletonComp)}
 
       {/* For each data row */}
       {data.map((row, i) => (
         <React.Fragment key={i}>
           {/* Separator: ├──────┼──────┤ */}
           {renderBorderRow(cols, { line: "─", left: "├", right: "┤", cross: "┼" }, SkeletonComp)}
-          {/* Data: │ Alice│ 30   │ */}
-          {renderDataRow(cols, row as Record<string, Scalar>, padding, CellComp, SkeletonComp)}
+          {/* Data row (multi-line) */}
+          {renderMultiLineDataRow(cols, row as Record<string, Scalar>, padding, CellComp, SkeletonComp)}
         </React.Fragment>
       ))}
 
