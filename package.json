@@ -7,12 +7,12 @@
     "node": ">=20"
   },
   "bin": {
-    "tatui": "./dist/cli.js"
+    "tatui": "./dist/entry.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/cli.js",
+    "start": "node dist/entry.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "patch-package"

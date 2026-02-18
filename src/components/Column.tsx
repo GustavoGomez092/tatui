@@ -44,14 +44,12 @@ export function Column({
       const day = getDayOfWeek(task.createdAt);
       if (day !== lastDay) {
         renderItems.push(
-          <Box key={`sep-${day}`} marginBottom={0}>
-            <DaySeparator label={DAY_LABELS[day]} />
-          </Box>
+          <DaySeparator key={`day-${day}`} label={DAY_LABELS[day]} />
         );
         lastDay = day;
       }
       renderItems.push(
-        <Box key={task.id} marginBottom={index < tasks.length - 1 ? 1 : 0}>
+        <Box key={`task-${task.id}`}>
           <TaskCard
             task={task}
             isSelected={isActive && index === selectedIndex}

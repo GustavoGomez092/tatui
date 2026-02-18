@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(gh api:*)",
+      "Bash(echo:*)",
+      "Bash(npm run build:*)",
+      "Bash(node:*)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)",
+      "Bash(bash ~/.claude/statusline.sh)"
     ]
   }
 }
