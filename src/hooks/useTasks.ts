@@ -10,7 +10,7 @@ import {
   type TaskWithProject,
 } from "../db/tasks.js";
 import { type TaskStatus } from "../db/schema.js";
-import { getWeekId } from "../utils/week.js";
+import { getWeekId, getDayOfWeek } from "../utils/week.js";
 import { type NewTask } from "../db/schema.js";
 
 export interface UseTasksResult {
@@ -37,15 +37,16 @@ export function useTasks(weekId: string = getWeekId()): UseTasksResult {
     setTasks(getTasksByWeek(weekId));
   }, [weekId]);
 
-  const tasksByStatus = useMemo(
-    () => ({
-      todo: tasks.filter((t) => t.status === "todo"),
-      "in-progress": tasks.filter((t) => t.status === "in-progress"),
-      done: tasks.filter((t) => t.status === "done"),
-      archived: tasks.filter((t) => t.status === "archived"),
-    }),
-    [tasks]
-  );
+  const tasksByStatus = useMemo(() => {
+    const sortByDay = (a: TaskWithProject, b: TaskWithProject) =>
+      getDayOfWeek(a.createdAt) - getDayOfWeek(b.createdAt);
+    return {
+      todo: tasks.filter((t) => t.status === "todo").sort(sortByDay),
+      "in-progress": tasks.filter((t) => t.status === "in-progress").sort(sortByDay),
+      done: tasks.filter((t) => t.status === "done").sort(sortByDay),
+      archived: tasks.filter((t) => t.status === "archived").sort(sortByDay),
+    };
+  }, [tasks]);
 
   const addTask = useCallback(
     (input: string | (Omit<NewTask, "weekId"> & { project?: string })) => {

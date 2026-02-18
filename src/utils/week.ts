@@ -35,6 +35,17 @@ export function getWeekEnd(date: Date = new Date()): Date {
   return start;
 }
 
+export const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
+
+/**
+ * Get day-of-week index from an ISO date string (0=Monday, 6=Sunday)
+ */
+export function getDayOfWeek(dateStr: string): number {
+  const d = new Date(dateStr);
+  const day = d.getDay();
+  return day === 0 ? 6 : day - 1;
+}
+
 /**
  * Format duration in minutes to human-readable string
  */
