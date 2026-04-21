@@ -47,6 +47,27 @@ export function getDayOfWeek(dateStr: string): number {
 }
 
 /**
+ * Return a new ISO timestamp whose date is the given day-of-week
+ * (0 = Monday … 6 = Sunday) of the same ISO week as `referenceIso`,
+ * preserving the hour/minute/second/ms of `referenceIso` in local time.
+ */
+export function setDayOfWeekPreservingTime(
+  referenceIso: string,
+  targetDayIndex: number
+): string {
+  const reference = new Date(referenceIso);
+  const target = getWeekStart(reference); // zeros time to 00:00 local
+  target.setDate(target.getDate() + targetDayIndex);
+  target.setHours(
+    reference.getHours(),
+    reference.getMinutes(),
+    reference.getSeconds(),
+    reference.getMilliseconds()
+  );
+  return target.toISOString();
+}
+
+/**
  * Format duration in minutes to human-readable string
  */
 export function formatDuration(minutes: number): string {
