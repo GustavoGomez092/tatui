@@ -206,6 +206,7 @@ export function TaskDetail({
         const newIso = setDayOfWeekPreservingTime(task.createdAt, pendingDayIndex);
         onUpdateField(task.id, { createdAt: newIso });
         setTimeout(() => setEditing(false), 0);
+        return;
       }
     },
     { isActive: isActive && editing && currentField === "createdAt" }
@@ -294,7 +295,6 @@ export function TaskDetail({
           <Badge color={status.color}>{status.label}</Badge>
         </Box>
       </Box>
-
 
       <Box flexDirection="column" gap={0}>
         {FIELDS.map((field, idx) => renderField(field, idx))}
