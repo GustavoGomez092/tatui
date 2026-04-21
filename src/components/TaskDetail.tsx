@@ -2,18 +2,23 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
 import { TextInput, StatusMessage, Badge } from "@inkjs/ui";
 import { type TaskWithProject } from "../db/tasks.js";
-import { formatDuration } from "../utils/week.js";
+import {
+  formatDuration,
+  getDayOfWeek,
+  setDayOfWeekPreservingTime,
+  DAY_LABELS,
+} from "../utils/week.js";
 import { parseDuration } from "../utils/parser.js";
 
-type DetailField = "title" | "project" | "description" | "duration";
-const FIELDS: DetailField[] = ["title", "project", "description", "duration"];
+type DetailField = "title" | "project" | "description" | "duration" | "createdAt";
+const FIELDS: DetailField[] = ["title", "project", "description", "duration", "createdAt"];
 
 interface TaskDetailProps {
   task: TaskWithProject;
   projectNames: string[];
   onUpdateField: (
     id: number,
-    data: Partial<Pick<TaskWithProject, "title" | "description" | "durationMinutes">>
+    data: Partial<Pick<TaskWithProject, "title" | "description" | "durationMinutes" | "createdAt">>
   ) => void;
   onChangeProject: (id: number, projectName: string) => void;
   onClose: () => void;
@@ -27,6 +32,15 @@ const STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
   archived: { label: "Archived", color: "gray" },
 };
 
+function formatCreatedLabel(iso: string): string {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const dayIdx = getDayOfWeek(iso);
+  return `${DAY_LABELS[dayIdx]} · ${y}-${m}-${day}`;
+}
+
 export function TaskDetail({
   task,
   projectNames,
@@ -39,6 +53,7 @@ export function TaskDetail({
   const [editing, setEditing] = useState(false);
   const [editKey, setEditKey] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [pendingDayIndex, setPendingDayIndex] = useState<number | null>(null);
 
   const status = STATUS_DISPLAY[task.status] ?? {
     label: task.status,
@@ -60,16 +75,23 @@ export function TaskDetail({
           return task.durationMinutes
             ? formatDuration(task.durationMinutes)
             : "";
+        case "createdAt":
+          return formatCreatedLabel(task.createdAt);
       }
     },
     [task]
   );
 
   const startEditing = useCallback(() => {
+    if (currentField === "createdAt") {
+      setPendingDayIndex(getDayOfWeek(task.createdAt));
+    } else {
+      setPendingDayIndex(null);
+    }
     setEditing(true);
     setEditKey((k) => k + 1);
     setErrorMsg(null);
-  }, []);
+  }, [currentField, task.createdAt]);
 
   const saveEdit = useCallback(
     (val: string) => {
@@ -167,6 +189,28 @@ export function TaskDetail({
     { isActive: isActive && editing }
   );
 
+  useInput(
+    (input, key) => {
+      if (!isActive || !editing || currentField !== "createdAt") return;
+      if (pendingDayIndex === null) return;
+
+      if (key.leftArrow || input === "h") {
+        setPendingDayIndex((i) => ((i ?? 0) + 6) % 7);
+        return;
+      }
+      if (key.rightArrow || input === "l") {
+        setPendingDayIndex((i) => ((i ?? 0) + 1) % 7);
+        return;
+      }
+      if (key.return) {
+        const newIso = setDayOfWeekPreservingTime(task.createdAt, pendingDayIndex);
+        onUpdateField(task.id, { createdAt: newIso });
+        setTimeout(() => setEditing(false), 0);
+      }
+    },
+    { isActive: isActive && editing && currentField === "createdAt" }
+  );
+
   const suggestions = useMemo(
     () => (currentField === "project" ? projectNames : []),
     [currentField, projectNames]
@@ -183,7 +227,9 @@ export function TaskDetail({
           ? "Project"
           : field === "description"
             ? "Description"
-            : "Duration";
+            : field === "duration"
+              ? "Duration"
+              : "Created";
 
     const displayValue = getFieldValue(field);
 
@@ -193,7 +239,15 @@ export function TaskDetail({
           <Text color={isFocused ? "cyan" : undefined} bold={isFocused}>
             {isFocused ? ">" : " "} {label}:{" "}
           </Text>
-          {isEditing ? (
+          {isEditing && field === "createdAt" ? (
+            <Text color="cyan">
+              ◀ {pendingDayIndex !== null
+                ? formatCreatedLabel(
+                    setDayOfWeekPreservingTime(task.createdAt, pendingDayIndex)
+                  )
+                : displayValue} ▶
+            </Text>
+          ) : isEditing ? (
             <TextInput
               key={`${field}-${editKey}`}
               defaultValue={displayValue}
@@ -239,10 +293,6 @@ export function TaskDetail({
         <Box>
           <Text dimColor>Status: </Text>
           <Badge color={status.color}>{status.label}</Badge>
-        </Box>
-        <Box>
-          <Text dimColor>Created: </Text>
-          <Text>{new Date(task.createdAt).toLocaleDateString()}</Text>
         </Box>
       </Box>
 
