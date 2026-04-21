@@ -282,7 +282,7 @@ export function App() {
   const handleDetailUpdateField = useCallback(
     (
       id: number,
-      data: Partial<Pick<TaskWithProject, "title" | "description" | "durationMinutes">>
+      data: Partial<Pick<TaskWithProject, "title" | "description" | "durationMinutes" | "createdAt">>
     ) => {
       editTask(id, data);
       // Update the detailTask in place so the view reflects changes

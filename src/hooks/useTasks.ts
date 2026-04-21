@@ -20,7 +20,7 @@ export interface UseTasksResult {
   addTask: (input: string | (Omit<NewTask, "weekId"> & { project?: string })) => TaskWithProject;
   editTask: (
     id: number,
-    data: Partial<Pick<TaskWithProject, "title" | "description" | "status" | "durationMinutes" | "position">>
+    data: Partial<Pick<TaskWithProject, "title" | "description" | "status" | "durationMinutes" | "position" | "createdAt">>
   ) => void;
   changeProject: (id: number, projectName: string) => TaskWithProject | undefined;
   move: (id: number, status: TaskStatus) => void;
@@ -60,7 +60,7 @@ export function useTasks(weekId: string = getWeekId()): UseTasksResult {
   const editTask = useCallback(
     (
       id: number,
-      data: Partial<Pick<TaskWithProject, "title" | "description" | "status" | "durationMinutes" | "position">>
+      data: Partial<Pick<TaskWithProject, "title" | "description" | "status" | "durationMinutes" | "position" | "createdAt">>
     ) => {
       const updated = updateTask(id, data);
       if (updated) {

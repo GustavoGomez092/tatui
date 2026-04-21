@@ -173,7 +173,7 @@ export function createTask(
 
 export function updateTask(
   id: number,
-  data: Partial<Pick<Task, "title" | "description" | "status" | "durationMinutes" | "position">>
+  data: Partial<Pick<Task, "title" | "description" | "status" | "durationMinutes" | "position" | "createdAt">>
 ): TaskWithProject | undefined {
   const db = getDb();
   const result = db
