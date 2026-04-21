@@ -288,7 +288,6 @@ export function TaskDetail({
       borderColor="cyan"
       flexGrow={1}
     >
-      {/* Status + Created (read-only info) */}
       <Box gap={3} marginBottom={1}>
         <Box>
           <Text dimColor>Status: </Text>
@@ -296,7 +295,7 @@ export function TaskDetail({
         </Box>
       </Box>
 
-      {/* Editable fields */}
+
       <Box flexDirection="column" gap={0}>
         {FIELDS.map((field, idx) => renderField(field, idx))}
       </Box>
